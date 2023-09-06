@@ -28,7 +28,7 @@ class BuildJoint:
         name=None,
     ):
         self.position = (0.0, 0.0, 0.0)
-        self.oriet = (0.0, 0.0, 0.0)
+        self.orient = (0.0, 0.0, 0.0)
 
         # If there is a reference node in the scene, let's learn from it.
         if reference_node is not None:
@@ -52,20 +52,30 @@ class BuildJoint:
 
 
 class BuildObject:
-    def __init__(self, position: MVector, name: str):
+    def __init__(self, position: MVector, name="Generic Build Object"):
+        """Generic build object that will inform other objects in Lever.
+
+        Args:
+            position (MVector): Position in space.
+            name (str, optional): Name of the build-object. Defaults to "Generic Build Object".
+        """        
         self.trans = "UNSET"
         self.shape = "UNSET"
         self.type = "UNKNOWN"
+        self.position = position
+        self.name = name
 
-        self.build(position=position)
+        self.build()
 
         self.brand()
 
-    def build(self, position):
+    def build(self):
+        """Turn this object into a functioning rig-piece.
+        """        
         cmds.warning(
             "A BuildObject with no subclass got built.  Making a dud Octahedron"
         )
-        self.trans = make_dud(position=position)
+        self.trans = make_dud(position=self.position)
 
     def brand(self):
         """'brands' the transform node with the extra attributes that identify this as part of lvl.
@@ -73,6 +83,21 @@ class BuildObject:
 
         cmds.addAttr(self.trans, longName="leverBuildObject", dt="string")
         # TODO Add this object to a "build_objects" layer.
+
+    def __str__(self):
+        return f"Lever Build object called {self.name}.  Type: {self.type}."
+
+
+class RigStructure:
+    def __init__(self):
+        self.name
+        self.type
+
+        self.build_objects = []
+
+    def build(self):
+        cmds.error("A generic RigStructure tried to build!  Nothing will happen.")
+
 
 
 def make_dud(position: MVector) -> str:
