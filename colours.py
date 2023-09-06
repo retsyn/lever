@@ -53,12 +53,12 @@ def change_colour(node: str, colour="red", findShape=True):
         findShape (bool, optional): _description_. Defaults to True.
 
     Raises:
-        ValueError: If one object specified by nodes doesn't exist or isn't unique.
+        NameError: If one object specified by nodes doesn't exist or isn't unique.
         TypeError: If the nodes has no shapes or is itself a shape.
     """
 
-    if cmds.objExists(node):
-        raise ValueError(f"'{node}' doesn't appear to exist in the scene.")
+    if cmds.objExists(node) == False:
+        raise NameError(f"'{node}' doesn't appear to exist in the scene.")
 
     if findShape:
         shapelist = cmds.listRelatives(node, shapes=True)
