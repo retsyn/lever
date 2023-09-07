@@ -116,6 +116,17 @@ class BuildObject:
         else:
             cmds.xform(self.trans, t=value, ws=True, a=True)
 
+    @property
+    def rotation(self):
+        return cmds. xform(self.trans, q=True, ro=True, ws=True, a=True)
+    
+    @rotation.setter
+    def rotation(self, value: iter):
+        if(len(value) != 3):
+            raise ValueError("Rotation value must be (x, y, z)")
+        else:
+            cmds.xform(self.trans, ro=value, ws=True, a=True)
+
     def __str__(self):
         return f"Lever Build object called {self.name}.  Type: {self.type}."
 
