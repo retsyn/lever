@@ -79,6 +79,7 @@ class BuildObject:
             "A BuildObject with no subclass got built.  Making a dud Octahedron"
         )
         self.trans = make_dud(position=self.position)
+        self.shape = cmds.listRelatives(self.trans, s=True)[0]
 
     def place(self):
         """Moves the transform to the desired position"""

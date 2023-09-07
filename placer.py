@@ -37,4 +37,17 @@ class Placer(build.BuildObject):
         
         dprint(f"Placer {self.trans} created.")
 
+    @property
+    def size(self):
+        # This should derive from the scale of the trans node.
+        return self.size
+    
+    @size.setter
+    def size(self, value):
+        if(type(value) not in ['float', 'int']):
+            raise TypeError(f"Size must be a float or int, not {type(value)}.")
+        else:
+            self.size = value
+            
+
 
