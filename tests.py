@@ -27,6 +27,7 @@ except:
 
 
 from . import build
+from . import lvnode
 from . import placer
 
 def random_vector():
@@ -45,6 +46,10 @@ def random_vector():
 
 def full_suite_test():
     test_suite = munit.SuiteUnitTest()
+
+    #  Testing lvNode
+    testing_mesh = cmds.polyCube()[0]
+    lv_test_node = lvnode.LvNode(testing_mesh)
 
     # Test build object, creation and properties.
     test_position = random_vector()

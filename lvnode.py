@@ -23,8 +23,8 @@ class LvNode:
         if cmds.objExists(node_name) == False:
             raise NameError(f"{node_name} not found in scene or is not unique.")
 
-        self.name = node_name
         self.uuid = cmds.ls(node_name, uuid=True)[0]
+        self.name = node_name
 
     @property
     def name(self) -> str:
@@ -100,3 +100,6 @@ class LvNode:
             raise ValueError("Rotate value requires three elements.")
 
         cmds.xform(self.name, q=False, ro=value, ws=True, a=True)
+
+    def __str__(self):
+        return (f"<LvNode>'{self.name}'")
