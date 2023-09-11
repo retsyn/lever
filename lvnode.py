@@ -61,7 +61,7 @@ class LvNode:
 
     @translate.setter
     def translate(self, value):
-        if type(value) not in ["float", "int"]:
+        if type(value) not in [tuple, list]:
             raise TypeError("Translate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Translate value requires three elements.")

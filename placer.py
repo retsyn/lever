@@ -16,7 +16,7 @@ import maya.cmds as cmds
 class Placer(build.BuildObject):
     def __init__(self, position: tuple, size: float, name: str, colour="yellow"):
         self.colour = colour
-        self.size = size
+        self._size = size
         self.type = "Placer"
         super().__init__(position, name)
         
@@ -27,7 +27,7 @@ class Placer(build.BuildObject):
         dprint("Building a placer...")
         
         # Nurbs sphere placer is created and moved to the coords passed.
-        self.trans = cmds.sphere(polygon=0, radius=self.size, n=self.name)[0]
+        self.trans = cmds.sphere(polygon=0, radius=self._size, n=self.name)[0]
         self.shape = cmds.listRelatives(self.trans, s=True)[0]
         dprint(f"trans node is {self.trans}, shape ndoe is {self.shape}")
         # Disconnect the initial Shader
@@ -40,14 +40,28 @@ class Placer(build.BuildObject):
     @property
     def size(self):
         # This should derive from the scale of the trans node.
-        return self.size
+        return self._size
     
     @size.setter
     def size(self, value):
-        if(type(value) not in ['float', 'int']):
+        if(type(value) not in [float, int]):
             raise TypeError(f"Size must be a float or int, not {type(value)}.")
         else:
-            self.size = value
+            self._size = value
+
+    @property
+    def translate(self):
+        return cmds.xform(self.trans, q=True, t=True, ws=True, a=True)
+
+    @translate.setter
+    def translate(self, value):
+        if type(value) not in [tuple, list]:
+            raise TypeError("Translate values must be lists or tuples.")
+        if len(value) != 3:
+            raise ValueError("Translate value requires three elements.")
+
+        cmds.xform(self.trans, q=False, t=value, ws=True, a=True)
+
             
 
 
