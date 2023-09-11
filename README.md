@@ -1,7 +1,7 @@
 # lever
  Module Rigging system for Maya
 
-### To run a suite test in Maya:
+### To run unit tests in Maya:
 ```
 # Note this requires "unload" and "munittest" to work:
 import sys
