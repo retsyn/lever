@@ -69,6 +69,13 @@ class LvNode:
         cmds.xform(self.long_name, q=False, t=value, ws=True, a=True)
 
     @property
+    def local_translate(self):
+        return cmds.xform(self.long_name, q=True, t=True, ws=False, a=True)
+    
+
+    
+
+    @property
     def rotate(self):
         return cmds.xform(self.name, q=True, ro=True, ws=True, a=True)
 
