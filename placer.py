@@ -44,7 +44,7 @@ class Placer(build.BuildObject):
     
     @size.setter
     def size(self, value):
-        if(type(value) not in [float, int]):
+        if not isinstance(value, (float, int)):
             raise TypeError(f"Size must be a float or int, not {type(value)}.")
         else:
             self._size = value
@@ -55,7 +55,7 @@ class Placer(build.BuildObject):
 
     @translate.setter
     def translate(self, value):
-        if type(value) not in [tuple, list]:
+        if not isinstance(value, (list, tuple)):
             raise TypeError("Translate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Translate value requires three elements.")
