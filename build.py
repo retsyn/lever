@@ -52,7 +52,7 @@ class BuildJoint:
             self.orient = orient
 
 
-class BuildObject:
+class PlanObject:
     def __init__(self, position: MVector, name="Generic Build Object"):
         """Generic build object that will inform other objects in Lever.
 
@@ -60,7 +60,7 @@ class BuildObject:
             position (MVector): Position in space.
             name (str, optional): Name of the build-object. Defaults to "Generic Build Object".
         """
-        dprint(f"Initializing a BuildObject named {name}")
+        dprint(f"Initializing a PlanObject named {name}")
         self.trans = "UNSET"
         self.shape = "UNSET"
         self.type = "UNKNOWN"
@@ -76,7 +76,7 @@ class BuildObject:
     def build(self):
         """Turn this object into a functioning rig-piece."""
         cmds.warning(
-            "A BuildObject with no subclass got built.  Making a dud Octahedron"
+            "A PlanObject with no subclass got built.  Making a dud Octahedron"
         )
         self.trans = make_dud(position=self.position)
         self.shape = cmds.listRelatives(self.trans, s=True)[0]
@@ -99,7 +99,7 @@ class BuildObject:
 
         Returns:
             list: Direct output of cmds.xform, in the form of [x, y, z]
-        """        
+        """
         return cmds.xform(self.trans, q=True, t=True, ws=True, a=True)
 
     @translation.setter
@@ -111,7 +111,7 @@ class BuildObject:
 
         Raises:
             ValueError: If the position is not the right kind of iterable (too long, too short.)
-        """        
+        """
         if len(value) != 3:
             raise ValueError("Translation value must be (x, y, z)")
         else:
@@ -119,14 +119,38 @@ class BuildObject:
 
     @property
     def rotation(self):
-        return cmds. xform(self.trans, q=True, ro=True, ws=True, a=True)
-    
+        """Encapsulation of the rotation channels.
+
+        Returns:
+            _type_: _description_
+        """
+        return cmds.xform(self.trans, q=True, ro=True, ws=True, a=True)
+
     @rotation.setter
     def rotation(self, value: iter):
-        if(len(value) != 3):
+        """Setter function encapsulation of the rotation channels.
+
+        Args:
+            value (iter): Any iterable with 3 elements, representing x,y,z
+
+        Raises:
+            ValueError: If the length of value is not 3.
+        """
+        if len(value) != 3:
             raise ValueError("Rotation value must be (x, y, z)")
         else:
             cmds.xform(self.trans, ro=value, ws=True, a=True)
+
+    @classmethod
+    def clean_all(self):
+        """Cleans up all build-objects in the scene."""
+        to_delete = [
+            node
+            for node in cmds.ls()
+            if cmds.attributeQuery("leverBuildObject", node=node, exists=True)
+        ]
+        dprint(f"Cleaning {len(to_delete)} objects.")
+        cmds.delete(to_delete)
 
     def __str__(self):
         return f"Lever Build object called {self.name}.  Type: {self.type}."
@@ -144,7 +168,7 @@ class RigStructure:
 
 
 def make_dud(position: MVector) -> str:
-    """Makes a dud object as debug behaviour, if a BuildObject with no subclass runs or other
+    """Makes a dud object as debug behaviour, if a PlanObject with no subclass runs or other
     'shouldn't happen' behaviours engage.
 
     Args:

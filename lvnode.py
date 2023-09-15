@@ -61,7 +61,7 @@ class LvNode:
 
     @translate.setter
     def translate(self, value):
-        if type(value) not in [tuple, list]:
+        if(isinstance(value, (float, int))):
             raise TypeError("Translate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Translate value requires three elements.")
@@ -81,25 +81,13 @@ class LvNode:
 
     @rotate.setter
     def rotate(self, value):
-        if type(value) not in ["float", "int"]:
+        if(isinstance(value, (float, int))):
             raise TypeError("Rotate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Rotate value requires three elements.")
 
         cmds.xform(self.long_name, q=False, ro=value, ws=True, a=True)
 
-    @property
-    def rotate(self):
-        return cmds.xform(self.name, q=True, ro=True, ws=True, a=True)
-
-    @rotate.setter
-    def rotate(self, value):
-        if type(value) not in ["float", "int"]:
-            raise TypeError("Rotate values must be lists or tuples.")
-        if len(value) != 3:
-            raise ValueError("Rotate value requires three elements.")
-
-        cmds.xform(self.name, q=False, ro=value, ws=True, a=True)
 
     def __str__(self):
         return (f"<LvNode>'{self.name}'")

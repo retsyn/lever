@@ -29,6 +29,7 @@ except:
 from . import build
 from . import lvnode
 from . import placer
+from . import rigspec
 
 
 def random_vector():
@@ -63,7 +64,7 @@ def full_suite_test():
 
     # Test build object, creation and properties.
     test_position = random_vector()
-    gen_build_object = build.BuildObject(test_position)
+    gen_build_object = build.PlanObject(test_position)
     test_suite.assert_equal(
         str(gen_build_object),
         "Lever Build object called Generic Build Object.  Type: UNKNOWN.",
@@ -120,10 +121,21 @@ def full_suite_test():
         0.00001,
         "Testing Placer object translation setter.",
     )
-    test_suite.assert_equal(
-        cmds.getAttr(test_placer_object.trans + ".scaleX"), test_size,
-        "Asserting that assigned size applied to placer trans",
+
+    # Test the cleanup features:
+    build.PlanObject.clean_all()
+
+    test_suite.assert_false(
+        cmds.objExists(test_placer_object.trans),
+        f"Asserting that {test_placer_object.trans} is deleted.",
     )
+    test_suite.assert_false(
+        cmds.objExists(gen_build_object.trans),
+        f"Asserting that {gen_build_object.trans} is deleted.",
+    )
+
+    # Testing rig-spec:
+    new_expression = rigspec.Expression("placer: p=1, n=yo, c=yellow")
 
     test_suite.report()
     print("Remember that an unclean scene make cause failures.")

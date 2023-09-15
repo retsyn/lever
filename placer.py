@@ -13,7 +13,7 @@ from .console import dprint
 import maya.cmds as cmds
 
 
-class Placer(build.BuildObject):
+class Placer(build.PlanObject):
     def __init__(self, position: tuple, size: float, name: str, colour="yellow"):
         self.colour = colour
         self._size = size
@@ -34,6 +34,7 @@ class Placer(build.BuildObject):
         shaders.remove_shader(self.shape)
         # Set up colour override
         cl.change_colour(self.trans, self.colour)
+        cmds.delete(self.trans, ch=True)
         
         dprint(f"Placer {self.trans} created.")
 
