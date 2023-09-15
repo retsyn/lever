@@ -135,7 +135,8 @@ def full_suite_test():
     )
 
     # Testing rig-spec:
-    new_expression = rigspec.Expression("placer: p=1, n=yo, c=yellow")
+    new_expression = rigspec.Expression("placer: p=(12, 38, 2), n=hellow, c=yellow, type=1")
+
 
     test_suite.report()
     print("Remember that an unclean scene make cause failures.")
