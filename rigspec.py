@@ -27,6 +27,7 @@ class Expression:
 
         self.parse_command()
         self.parse_arguments()
+        self.cast_arguments()
 
     def parse_command(self):
         """Determines what command is called.
@@ -77,7 +78,32 @@ class Expression:
 
     def cast_arguments(self):
         # This is for turning all that string data into tuples, numbers, etc.
-        pass
+        if(self.args is None):
+            raise ValueError("Can't cast args before they've been parsed yet.")
+        
+        for i in self.args:
+            arg = self.args[i]
+            if('(' in arg):
+                # Remove parens and spaces, then cast the delimeted strings to floats. 
+                numbers = arg.replace('(', '').replace(')', '').replace(' ', '')
+                arg = [float(n) for n in numbers.split(',')]
+                arg = tuple(float)
+                dprint(f"Arg {arg} is now {type(arg)}")
+            elif(arg.replace('.', '').isdigit()):
+                # If there are numbers only, we check for a . or not and cast as float or int.
+                if('.' in arg):
+                    arg = float(arg)
+                    dprint(f"Arg {arg} is now {type(arg)}")
+                else:
+                    arg = int(arg)
+                    dprint(f"Arg {arg} is now {type(arg)}")
+            elif(arg.replace('_', '').isalpha()):
+                # If only alpha chars plus '_'.
+                dprint(f"Arg {arg} will remain a string.")
+                
+
+
+
 
 
 
