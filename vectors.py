@@ -1,10 +1,10 @@
-'''
+"""
 vector.py
 Created: Friday, 30th June 2023 10:58:39 am
 Matthew Riche
 Last Modified: Friday, 30th June 2023 10:58:39 am
 Modified By: Matthew Riche
-'''
+"""
 
 
 # This module leverages MVector from om2 to provide vector math that is strong against FPP errors.
@@ -13,7 +13,8 @@ from maya.api.OpenMaya import MVector
 import maya.cmds as cmds
 import logging as log
 
-def cross_prod(vector1, vector2):
+
+def cross_prod(vector1: iter, vector2: iter) -> MVector:
     """Get the cross product of two vectors.
     Args will be sanitize to precise MVectors and returned as such.
 
@@ -23,7 +24,7 @@ def cross_prod(vector1, vector2):
 
     Returns:
         MVector: Cross product vector.
-    """    
+    """
 
     vector1 = sanitize(vector1)
     vector2 = sanitize(vector2)
@@ -32,7 +33,8 @@ def cross_prod(vector1, vector2):
 
     return cross_prod
 
-def dot_prod(vector1, vector2):
+
+def dot_prod(vector1: iter, vector2: iter) -> float:
     """Returns the dot product or "inner product" of 2 line vectors.
 
     Args:
@@ -41,17 +43,18 @@ def dot_prod(vector1, vector2):
 
     Returns:
         Float: Degrees of angle between two line vectors.
-    """    
+    """
 
     vector1 = sanitize(vector1)
     vector2 = sanitize(vector2)
 
-    return (vector1 * vector2)
+    return vector1 * vector2
+
 
 def best_fit_from_plane():
     pass
     # TODO
-    '''
+    """
     	# Initialize plane normal
 	norm = OpenMaya.MVector()
 	
@@ -66,9 +69,10 @@ def best_fit_from_plane():
 	
 	# Normalize result
 	norm.normalize()
-    '''
-    
-def plane_normal(point_a, point_b, point_c):
+    """
+
+
+def plane_normal(point_a: iter, point_b: iter, point_c: iter) -> MVector:
     """Get a normal angle from a plane defined by three points.
 
     Args:
@@ -78,15 +82,16 @@ def plane_normal(point_a, point_b, point_c):
 
     Returns:
         MVector: Line vector normal of the plane.
-    """    
+    """
 
     point_a = sanitize(point_a)
     point_b = sanitize(point_b)
     point_c = sanitize(point_c)
 
-    return ((point_c - point_a) * (point_b - point_c))
+    return (point_c - point_a) * (point_b - point_c)
 
-def get_line(point_a, point_b, reversed=False):
+
+def get_line(point_a: iter, point_b: iter, reversed=False) -> MVector:
     """Get a single vector represting the line vector.
 
     Args:
@@ -96,17 +101,17 @@ def get_line(point_a, point_b, reversed=False):
 
     Returns:
         MVector: A line vector
-    """    
+    """
 
     point_a = sanitize(point_a)
     point_b = sanitize(point_b)
-    if(reversed):
+    if reversed:
         return point_b - point_a
     else:
         return point_a - point_b
 
 
-def sanitize(vector):
+def sanitize(vector: iter) -> MVector:
     """Makes sure other types that express vectors are turns into MVectors safely before any math is
     done on them.  MVector is our protection against FPP errors.
 
@@ -120,24 +125,28 @@ def sanitize(vector):
 
     Returns:
         MVector: Returns OpenMaya's MVector class from whatever was provided.
-    """    
+    """
 
     # MVector itself can accept a lot of incoming data sanely, so a basic re-cast first.
     try:
         sanitized_vec = MVector(vector)
     except ValueError:
         # Raise an exception explaining why the above failed.
-        if(type(vector) in [list, tuple]):
-            if(len(vector) != 3):
-                raise ValueError(f"Can't sanitize {vector} to vector: number of elements is not 3.")
+        if type(vector) in [list, tuple]:
+            if len(vector) != 3:
+                raise ValueError(
+                    f"Can't sanitize {vector} to vector: number of elements is not 3."
+                )
             else:
                 for element in vector:
-                    if(type(element) not in [float, int, complex]):
-                        raise TypeError(f"Can't sanitize {vector}, {element} not a number.")
+                    if type(element) not in [float, int, complex]:
+                        raise TypeError(
+                            f"Can't sanitize {vector}, {element} not a number."
+                        )
                 # Logically if the exception was thrown, one of the above tests should have failed.
                 # But, also "logically", if they have passed somehow, it's worth casting as MVector.
                 sanitized_vec = MVector(vector)
         else:
             raise TypeError(f"{vector} can't be interpreted as a vector at all.")
-    
+
     return sanitized_vec
