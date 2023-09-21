@@ -11,52 +11,146 @@ import maya.api.OpenMaya as om2
 from . import vectors
 
 
-def get_matrix(node: str):
-    """Given a transform node, return a MMatrix of it's position.
+class lmatrix:
+    def __init__(self, node: str):
+        """Given a transform node, return a MMatrix of it's position.
 
-    Args:
-        node (str): The name of the node.  Must exist and be unique.
+        Args:
+            node (str): The name of the node.  Must exist and be unique.
 
-    Raises:
-        ValueError: If the node isn't found in scene or isn't unique.
-        TypeError: If the node doesn't have transform properties.
+        Raises:
+            ValueError: If the node isn't found in scene or isn't unique.
+            TypeError: If the node doesn't have transform properties.
 
-    Returns:
-        MMatrix: Usable matrix data (from om2.)
-    """
+        Returns:
+            MMatrix: Usable matrix data (from om2.)
+        """
 
-    if cmds.objExists == False:
-        raise ValueError(f"{node} isn't a node found in the scene (Or is not unique).")
-    elif cmds.objectType(node) not in ["joint", "transform"]:
-        raise TypeError(f"{node} is not of type joint or transform.")
-
-    # Get a dagpath in order toget a MFnTransform in order to return a MMatrix.
-    selection_list = om2.MGlobal.getSelectionListByName(node)
-    dag_path = selection_list.getDagPath(0)
-    transform_fn = om2.MFnTransform(dag_path)
-
-    return transform_fn.transformation().asMatrix()
-
-
-def aim(
-    node: str,
-    primary_target: str,
-    secondary_target: str,
-    primary_axis='y',
-    secondary_axis='x',
-):
-    for node_name in [node, primary_target, secondary_target]:
-        if cmds.objExists(node_name) == False:
+        if cmds.objExists == False:
             raise ValueError(
-                f"{node_name} doesn't exist in the scene or is not unique."
+                f"{node} isn't a node found in the scene (Or is not unique)."
             )
-        if cmds.objectType(node_name) not in ["transform", "joint"]:
-            raise TypeError(f"{node} not of type joint or transform.")
+        elif cmds.objectType(node) not in ["joint", "transform"]:
+            raise TypeError(f"{node} is not of type joint or transform.")
 
-    for axis_value in [primary_axis, secondary_axis]:
-        if axis_value not in ["x", "y", "z"]:
-            raise ValueError(
-                f"primary and secondary axis must be 'x', 'y', or 'z', not {axis_value}."
-            )
+        # Get a dagpath in order toget a MFnTransform in order to return a MMatrix.
+        selection_list = om2.MGlobal.getSelectionListByName(node)
+        dag_path = selection_list.getDagPath(0)
+        transform_fn = om2.MFnTransform(dag_path)
 
-    subject_matrix = get_matrix(node)
+        self.mmatrix = transform_fn.transformation().asMatrix()
+
+        self.x_vector = (self.mmatrix[0], self.mmatrix[1], self.mmatrix[2])
+        self.y_vector = (self.mmatrix[4], self.mmatrix[5], self.mmatrix[6])
+        self.z_vector = (self.mmatrix[8], self.mmatrix[9], self.mmatrix[10])
+
+        self.trans = (self.mmatrix[12], self.mmatrix[13], self.mmatrix[14])
+
+    @property
+    def trans(self) -> tuple:
+        return (self.mmatrix[12], self.mmatrix[13], self.mmatrix[14])
+
+    @trans.setter
+    def trans(self, value: iter):
+        """Sets the fourth row values to reflect the given iterable.
+        Args:
+            value (iter): Tuple or list with three elements.
+
+        Raises:
+            TypeError: If anything within the iterable isn't the right type.
+            ValueError: If the iterable contains more or less than 3 elements.
+        """
+
+        for val in value:
+            if isinstance(val, (float, int)) == False:
+                raise TypeError(f"{val} is not a float or int.")
+
+        if len(value) != 3:
+            raise ValueError(f"{value} doesn't contain exactly three values.")
+
+        self.mmatrix[12] = value[0]
+        self.mmatrix[13] = value[1]
+        self.mmatrix[14] = value[2]
+
+    @property
+    def x_vector(self) -> tuple:
+        return (self.mmatrix[0], self.mmatrix[1], self.mmatrix[2])
+
+    @x_vector.setter
+    def x_vector(self, value: iter):
+        for val in value:
+            if isinstance(val, (float, int)) == False:
+                raise TypeError(f"{val} is not a float or int.")
+
+        if len(value) != 3:
+            raise ValueError(f"{value} doesn't contain exactly three values.")
+
+        self.mmatrix[0] = value[0]
+        self.mmatrix[1] = value[1]
+        self.mmatrix[2] = value[2]
+
+    @property
+    def y_vector(self) -> tuple:
+        return (self.mmatrix[4], self.mmatrix[5], self.mmatrix[6])
+        
+    @x_vector.setter
+    def y_vector(self, value: iter):
+        for val in value:
+            if isinstance(val, (float, int)) == False:
+                raise TypeError(f"{val} is not a float or int.")
+
+        if len(value) != 3:
+            raise ValueError(f"{value} doesn't contain exactly three values.")
+
+        self.mmatrix[4] = value[0]
+        self.mmatrix[5] = value[1]
+        self.mmatrix[6] = value[2]
+
+    @property
+    def z_vector(self) -> tuple:
+        return (self.mmatrix[8], self.mmatrix[9], self.mmatrix[10])
+        
+    @x_vector.setter
+    def z_vector(self, value: iter):
+        for val in value:
+            if isinstance(val, (float, int)) == False:
+                raise TypeError(f"{val} is not a float or int.")
+
+        if len(value) != 3:
+            raise ValueError(f"{value} doesn't contain exactly three values.")
+
+        self.mmatrix[8] = value[0]
+        self.mmatrix[9] = value[1]
+        self.mmatrix[10] = value[2]
+
+
+    def aim(
+        self,
+        primary_target: str,
+        secondary_target: str,
+        primary_axis="y",
+        secondary_axis="x",
+    ):
+        for node_name in [primary_target, secondary_target]:
+            if cmds.objExists(node_name) == False:
+                raise ValueError(
+                    f"{node_name} doesn't exist in the scene or is not unique."
+                )
+            if cmds.objectType(node_name) not in ["transform", "joint"]:
+                raise TypeError(f"{node_name} not of type joint or transform.")
+
+        for axis_value in [primary_axis, secondary_axis]:
+            if axis_value not in ["x", "y", "z"]:
+                raise ValueError(
+                    f"primary and secondary axis must be 'x', 'y', or 'z', not {axis_value}."
+                )
+
+        pass
+    
+    def __getitem__(self, i):
+        return self.mmatrix[i]
+    
+    def __setitem__(self, i, value):
+        self.mmatrix[i] = value
+        
+

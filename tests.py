@@ -14,6 +14,7 @@ import maya.cmds as cmds
 import sys
 
 import random
+import pprint as pp
 
 sys.path.append("C:/3DDev/rtech/")
 
@@ -30,6 +31,7 @@ from . import build
 from . import lvnode
 from . import placer
 from . import rigspec
+from . import matrices
 
 
 def random_vector():
@@ -137,6 +139,15 @@ def full_suite_test():
     # Testing rig-spec:
     new_expression = rigspec.Expression("placer: p=(12, 38, 2), n=hellow, c=yellow, type=1")
 
+
+    # Testing Matrices
+    test_matrix = matrices.lmatrix(testing_mesh)
+    # READ the MMatrix docs to come up with decent tests
+
+    ii = 0
+    for i in test_matrix:
+        print(f"{ii}:{i}")
+        ii += 1
 
     test_suite.report()
     print("Remember that an unclean scene make cause failures.")
