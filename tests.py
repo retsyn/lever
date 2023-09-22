@@ -26,12 +26,31 @@ except:
         "munittest not available.  Get it at https://github.com/retsyn/munittest"
     )
 
+print("Importing modules.")
+try:
+    from . import build
+except:
+    raise ImportError("Couldn't parse build module")
 
-from . import build
-from . import lvnode
-from . import placer
-from . import rigspec
-from . import matrices
+try:
+    from . import lvnode
+except:
+    raise ImportError("Couldn't parse lvnode module")
+
+try:
+    from . import placer
+except:
+    raise ImportError("Couldn't parse placer module.")
+
+try:
+    from . import rigspec
+except:
+    raise ImportError("Couldn't parse rigspec module.")
+
+try:
+    from . import matrices
+except:
+    raise ImportError("Couldn't parse matrices module.")
 
 
 def random_vector():

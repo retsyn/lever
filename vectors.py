@@ -14,63 +14,87 @@ import maya.cmds as cmds
 import logging as log
 
 
-def cross_prod(vector1: iter, vector2: iter) -> MVector:
-    """Get the cross product of two vectors.
-    Args will be sanitize to precise MVectors and returned as such.
+class lvector:
+    def __init__(self, vector: iter):
+        self._sanitize(vector)
+        self.mvector = vector
 
-    Args:
-        vector1 (iterable): Any "vector-esce" iterable.
-        vector2 (iterable): Any "vector-esce" iterable.
+    def _sanitize(self, vector: iter):
+        for v in vector:
+            if isinstance(v, (float, int) == False):
+                raise TypeError(f"{v} must be a float or int, not {type(v)}.")
+        if len(vector != 3):
+            raise ValueError(f"{vector} doesn't have the right number of elements.")
 
-    Returns:
-        MVector: Cross product vector.
-    """
+    def cross_prod(self, vector2: iter) -> MVector:
+        self._sanitize(vector2)
+        cross_prod = self.mvector ^ vector2
 
-    vector1 = sanitize(vector1)
-    vector2 = sanitize(vector2)
+        return cross_prod
 
-    cross_prod = vector1 ^ vector2
+    def dot_prod(self, vector2: iter) -> float:
+        self._sanitize(vector2)
 
-    return cross_prod
+        return self.mvector * vector2
+
+    @property
+    def x(self) -> float:
+        return self.mvector.x
+
+    @x.setter
+    def x(self, value):
+        if isinstance(value, (float, int)):
+            raise TypeError(f"{value} needs to be int or float.")
+        self.mvector.x = value
+
+    @property
+    def y(self) -> float:
+        return self.mvector.y
+
+    @y.setter
+    def y(self, value):
+        if isinstance(value, (float, int)):
+            raise TypeError(f"{value} needs to be int or float.")
+        self.mvector.y = value
+
+    @property
+    def z(self) -> float:
+        return self.mvector.z
+
+    @z.setter
+    def z(self, value):
+        if isinstance(value, (float, int)):
+            raise TypeError(f"{value} needs to be int or float.")
+        self.mvector.z = value
+
+    def __add__(self, vector2):
+        """For adding other vectors
+
+        Args:
+            vector2 (iter): vector or iterable (will be sanitized)
+        """
+        vector2 = self._sanitize(vector2)
+
+        return MVector(
+            self.mvector.x + vector2.x,
+            self.mvector.y + vector2.y,
+            self.mvector.z + vector2.z
+        )
 
 
-def dot_prod(vector1: iter, vector2: iter) -> float:
-    """Returns the dot product or "inner product" of 2 line vectors.
+    def __sub__(self, vector2: iter):
+        """For subtracting other vectors.
 
-    Args:
-        vector1 (iterable): Line Vector
-        vector2 (iterable): Second Line Vector
+        Args:
+            vector2 (iter): vector or iterable (will be sanitized)
+        """
+        vector2 = self._sanitize(vector2)
 
-    Returns:
-        Float: Degrees of angle between two line vectors.
-    """
-
-    vector1 = sanitize(vector1)
-    vector2 = sanitize(vector2)
-
-    return vector1 * vector2
-
-
-def best_fit_from_plane():
-    pass
-    # TODO
-    """
-    	# Initialize plane normal
-	norm = OpenMaya.MVector()
-	
-	# Get Point Positions
-	ptList = [glTools.utils.base.getPosition(p) for p in ptList]
-	
-	# Calculate Plane Normal
-	for i in range(len(ptList)):
-		prev = OpenMaya.MVector(ptList[i-1][0],ptList[i-1][1],ptList[i-1][2])
-		curr = OpenMaya.MVector(ptList[i][0],ptList[i][1],ptList[i][2])
-		norm += OpenMaya.MVector((prev.z + curr.z) * (prev.y - curr.y), (prev.x + curr.x) * (prev.z - curr.z), (prev.y + curr.y) *  (prev.x - curr.x))
-	
-	# Normalize result
-	norm.normalize()
-    """
-
+        return MVector(
+            self.mvector.x - vector2.x,
+            self.mvector.y - vector2.y,
+            self.mvector.z - vector2.z
+        )
 
 def plane_normal(point_a: iter, point_b: iter, point_c: iter) -> MVector:
     """Get a normal angle from a plane defined by three points.
@@ -84,11 +108,32 @@ def plane_normal(point_a: iter, point_b: iter, point_c: iter) -> MVector:
         MVector: Line vector normal of the plane.
     """
 
-    point_a = sanitize(point_a)
-    point_b = sanitize(point_b)
-    point_c = sanitize(point_c)
+    point_a = lvector(point_a)
+    point_b = lvector(point_b)
+    point_c = lvector(point_c)
 
     return (point_c - point_a) * (point_b - point_c)
+
+
+def best_fit_from_plane():
+    pass
+    # TODO
+    """
+        # Initialize plane normal
+    norm = OpenMaya.MVector()
+    
+    # Get Point Positions
+    ptList = [glTools.utils.base.getPosition(p) for p in ptList]
+    
+    # Calculate Plane Normal
+    for i in range(len(ptList)):
+        prev = OpenMaya.MVector(ptList[i-1][0],ptList[i-1][1],ptList[i-1][2])
+        curr = OpenMaya.MVector(ptList[i][0],ptList[i][1],ptList[i][2])
+        norm += OpenMaya.MVector((prev.z + curr.z) * (prev.y - curr.y), (prev.x + curr.x) * (prev.z - curr.z), (prev.y + curr.y) *  (prev.x - curr.x))
+    
+    # Normalize result
+    norm.normalize()
+    """
 
 
 def get_line(point_a: iter, point_b: iter, reversed=False) -> MVector:
@@ -103,50 +148,9 @@ def get_line(point_a: iter, point_b: iter, reversed=False) -> MVector:
         MVector: A line vector
     """
 
-    point_a = sanitize(point_a)
-    point_b = sanitize(point_b)
+    point_a = lvector(point_a)
+    point_b = lvector(point_b)
     if reversed:
         return point_b - point_a
     else:
         return point_a - point_b
-
-
-def sanitize(vector: iter) -> MVector:
-    """Makes sure other types that express vectors are turns into MVectors safely before any math is
-    done on them.  MVector is our protection against FPP errors.
-
-    Args:
-        vector (list, tuple, MVector): A vector expressed as anything reasonably vector-like.
-
-    Raises:
-        ValueError: If the wrong number of values is in the given iterable.
-        TypeError: If a non-numerical type is in the given iterable.
-        TypeError: If the vector argument isn't even iterable.
-
-    Returns:
-        MVector: Returns OpenMaya's MVector class from whatever was provided.
-    """
-
-    # MVector itself can accept a lot of incoming data sanely, so a basic re-cast first.
-    try:
-        sanitized_vec = MVector(vector)
-    except ValueError:
-        # Raise an exception explaining why the above failed.
-        if type(vector) in [list, tuple]:
-            if len(vector) != 3:
-                raise ValueError(
-                    f"Can't sanitize {vector} to vector: number of elements is not 3."
-                )
-            else:
-                for element in vector:
-                    if type(element) not in [float, int, complex]:
-                        raise TypeError(
-                            f"Can't sanitize {vector}, {element} not a number."
-                        )
-                # Logically if the exception was thrown, one of the above tests should have failed.
-                # But, also "logically", if they have passed somehow, it's worth casting as MVector.
-                sanitized_vec = MVector(vector)
-        else:
-            raise TypeError(f"{vector} can't be interpreted as a vector at all.")
-
-    return sanitized_vec
