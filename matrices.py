@@ -93,7 +93,7 @@ class lmatrix:
     def y_vector(self) -> tuple:
         return (self.mmatrix[4], self.mmatrix[5], self.mmatrix[6])
         
-    @x_vector.setter
+    @y_vector.setter
     def y_vector(self, value: iter):
         for val in value:
             if isinstance(val, (float, int)) == False:
@@ -110,7 +110,7 @@ class lmatrix:
     def z_vector(self) -> tuple:
         return (self.mmatrix[8], self.mmatrix[9], self.mmatrix[10])
         
-    @x_vector.setter
+    @z_vector.setter
     def z_vector(self, value: iter):
         for val in value:
             if isinstance(val, (float, int)) == False:

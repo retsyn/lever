@@ -124,6 +124,43 @@ def full_suite_test():
         "Testing Placer object translation setter.",
     )
 
+    # Testing rig-spec:
+    new_expression = rigspec.Expression(
+        "placer: p=(12, 38, 2), n=hellow, c=yellow, type=1"
+    )
+
+    # Testing Matrices
+    test_matrix = matrices.lmatrix(testing_mesh)
+    test_suite.assert_near(
+        test_matrix.trans,
+        cmds.xform(testing_mesh, q=True, t=True, ws=True),
+        0.0001,
+        "Testing if matrix trans property matches actual transform.",
+    )
+
+    cmds.rotate(90, 0, 0, testing_mesh)
+    rot_matrix = matrices.lmatrix(testing_mesh)
+    test_suite.assert_true(
+        rot_matrix.x_vector == (1.0, 0.0, 0.0),
+        "Testing x_vector member of lmatrix is unchanged.",
+    )
+
+    test_suite.assert_true(
+        rot_matrix.y_vector == (0.0, 0.0, 1.0),
+        "Testing x_vector member of lmatrix points scene-forward.",
+    )
+
+    test_suite.assert_true(
+        rot_matrix.z_vector == (0.0, -1.0, 0.0),
+        "Testing z_vector member of lmatrix points scene-down.",
+    )
+
+
+    print(f"{rot_matrix.x_vector}")
+    print(f"{rot_matrix.y_vector}")
+    print(f"{rot_matrix.z_vector}")
+
+
     # Test the cleanup features:
     build.PlanObject.clean_all()
 
@@ -136,18 +173,6 @@ def full_suite_test():
         f"Asserting that {gen_build_object.trans} is deleted.",
     )
 
-    # Testing rig-spec:
-    new_expression = rigspec.Expression("placer: p=(12, 38, 2), n=hellow, c=yellow, type=1")
-
-
-    # Testing Matrices
-    test_matrix = matrices.lmatrix(testing_mesh)
-    # READ the MMatrix docs to come up with decent tests
-
-    ii = 0
-    for i in test_matrix:
-        print(f"{ii}:{i}")
-        ii += 1
 
     test_suite.report()
     print("Remember that an unclean scene make cause failures.")
