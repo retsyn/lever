@@ -179,9 +179,8 @@ def make_dud(position: MVector) -> str:
         str: transform name.
     """
 
-    if type(position) is not MVector:
-        position = vectors.sanitize(position)
-
     new_solid_trans = cmds.polyPlatonicSolid(st=2, name="Dud")[0]
+    cmds.xform(new_solid_trans, t=position, ws=True)
+
 
     return new_solid_trans
