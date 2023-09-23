@@ -71,6 +71,7 @@ def full_suite_test():
 
     #  Testing lvNode
     testing_mesh = cmds.polyCube()[0]
+    testing_mesh2 = cmds.polyCube()[0]
     lv_test_node = lvnode.LvNode(testing_mesh)
 
     test_position = random_vector()
@@ -150,6 +151,7 @@ def full_suite_test():
 
     # Testing Matrices
     test_matrix = matrices.lmatrix(testing_mesh)
+    test_matrix2 = matrices.lmatrix(testing_mesh2)
     test_suite.assert_near(
         test_matrix.trans,
         cmds.xform(testing_mesh, q=True, t=True, ws=True),
@@ -159,7 +161,10 @@ def full_suite_test():
     print(test_matrix.trans)
     print(cmds.xform(testing_mesh, q=True, t=True, ws=True))
 
+    # Rotate the testing meshes in predicted and random orientations for vector tests.
     cmds.rotate(90, 0, 0, testing_mesh)
+    random_rot = random_vector()
+    cmds.rotate(random_rot[0], random_rot[1], random_rot[2], testing_mesh2)
     rot_matrix = matrices.lmatrix(testing_mesh)
     test_suite.assert_true(
         rot_matrix.x_vector == (1.0, 0.0, 0.0),
@@ -176,11 +181,19 @@ def full_suite_test():
         "Testing z_vector member of lmatrix points scene-down.",
     )
 
+    # Apply the matrix taken from testing_mesh2 to testing_mesh1
+    test_matrix2.apply(testing_mesh)
+
+    test_suite.assert_near(
+        cmds.xform(testing_mesh, q=True, t=True, ws=True),
+        cmds.xform(testing_mesh2, q=True, t=True, ws=True),
+        0.0001,
+        "Testing if the application of the same matrix has placed it in an identical spot.",
+    )
 
     print(f"{rot_matrix.x_vector}")
     print(f"{rot_matrix.y_vector}")
     print(f"{rot_matrix.z_vector}")
-
 
     # Test the cleanup features:
     build.PlanObject.clean_all()

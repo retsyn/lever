@@ -82,14 +82,26 @@ class lmatrix:
                 f"{node} is not joint or transform.  Can't apply a MMatrix."
             )
         # Create an MFnTransform function set for the transform node
-        transform_fn = om2.MFnTransform(node)
-        # Set the transformation matrix on the transform node
-        transform_fn.setMatrix(self.mmatrix, om2.MSpace.kTransform)
+        selection_list = om2.MGlobal.getSelectionListByName(node)
+        dag_path = selection_list.getDagPath(0)
+        transform_fn = om2.MFnTransform(dag_path)
+
+        # Set the translation component of the transformation matrix
+        #transform_fn.setTranslation(self.precise_trans) WHAT IS THE OTHER ARG FOR THIS?
+        # Now how do I get the rotation?
+
+    @property
+    def precise_trans(self) -> tuple:
+        return (
+            dc.Decimal(self.mmatrix[12]),
+            dc.Decimal(self.mmatrix[13]),
+            dc.Decimal(self.mmatrix[14])
+        )
 
     @property
     def trans(self) -> tuple:
         return (self.mmatrix[12], self.mmatrix[13], self.mmatrix[14])
-
+    
     @trans.setter
     def trans(self, value: iter):
         """Sets the fourth row values to reflect the given iterable.
