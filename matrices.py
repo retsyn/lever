@@ -8,7 +8,10 @@ Modified By: Matthew Riche
 
 import maya.cmds as cmds
 import maya.api.OpenMaya as om2
+import decimal as dc
 from . import vectors
+
+dc.getcontext().prec = 32
 
 
 class lmatrix:
@@ -40,11 +43,48 @@ class lmatrix:
 
         self.mmatrix = transform_fn.transformation().asMatrix()
 
-        self.x_vector = (self.mmatrix[0], self.mmatrix[1], self.mmatrix[2])
-        self.y_vector = (self.mmatrix[4], self.mmatrix[5], self.mmatrix[6])
-        self.z_vector = (self.mmatrix[8], self.mmatrix[9], self.mmatrix[10])
+        self.x_vector = (
+            dc.Decimal(self.mmatrix[0]),
+            dc.Decimal(self.mmatrix[1]),
+            dc.Decimal(self.mmatrix[2]),
+        )
+        self.y_vector = (
+            dc.Decimal(self.mmatrix[4]),
+            dc.Decimal(self.mmatrix[5]),
+            dc.Decimal(self.mmatrix[6]),
+        )
+        self.z_vector = (
+            dc.Decimal(self.mmatrix[8]),
+            dc.Decimal(self.mmatrix[9]),
+            dc.Decimal(self.mmatrix[10]),
+        )
 
-        self.trans = (self.mmatrix[12], self.mmatrix[13], self.mmatrix[14])
+        self.trans = (
+            dc.Decimal(self.mmatrix[12]),
+            dc.Decimal(self.mmatrix[13]),
+            dc.Decimal(self.mmatrix[14]),
+        )
+
+    def apply(self, node: str):
+        """Applies the mmatrix attribute to any nodes given by argument.
+
+        Args:
+            node (str): Unique name of a node in scene.
+
+        Raises:
+            ValueError: If the node doesn't exist or isn't unique.
+            TypeError: If the node isn't a transform or joint.
+        """
+        if cmds.objExists(node) == False:
+            raise ValueError(f"{node} doesn't name a unique node found in the scene.")
+        if cmds.nodeType(node) not in ["transform", "joint"]:
+            raise TypeError(
+                f"{node} is not joint or transform.  Can't apply a MMatrix."
+            )
+        # Create an MFnTransform function set for the transform node
+        transform_fn = om2.MFnTransform(node)
+        # Set the transformation matrix on the transform node
+        transform_fn.setMatrix(self.mmatrix, om2.MSpace.kTransform)
 
     @property
     def trans(self) -> tuple:
@@ -62,7 +102,7 @@ class lmatrix:
         """
 
         for val in value:
-            if isinstance(val, (float, int)) == False:
+            if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
 
         if len(value) != 3:
@@ -79,7 +119,7 @@ class lmatrix:
     @x_vector.setter
     def x_vector(self, value: iter):
         for val in value:
-            if isinstance(val, (float, int)) == False:
+            if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
 
         if len(value) != 3:
@@ -92,11 +132,11 @@ class lmatrix:
     @property
     def y_vector(self) -> tuple:
         return (self.mmatrix[4], self.mmatrix[5], self.mmatrix[6])
-        
+
     @y_vector.setter
     def y_vector(self, value: iter):
         for val in value:
-            if isinstance(val, (float, int)) == False:
+            if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
 
         if len(value) != 3:
@@ -109,11 +149,11 @@ class lmatrix:
     @property
     def z_vector(self) -> tuple:
         return (self.mmatrix[8], self.mmatrix[9], self.mmatrix[10])
-        
+
     @z_vector.setter
     def z_vector(self, value: iter):
         for val in value:
-            if isinstance(val, (float, int)) == False:
+            if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
 
         if len(value) != 3:
@@ -122,7 +162,6 @@ class lmatrix:
         self.mmatrix[8] = value[0]
         self.mmatrix[9] = value[1]
         self.mmatrix[10] = value[2]
-
 
     def aim(
         self,
@@ -146,11 +185,9 @@ class lmatrix:
                 )
 
         pass
-    
+
     def __getitem__(self, i):
         return self.mmatrix[i]
-    
+
     def __setitem__(self, i, value):
         self.mmatrix[i] = value
-        
-

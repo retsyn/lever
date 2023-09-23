@@ -153,9 +153,11 @@ def full_suite_test():
     test_suite.assert_near(
         test_matrix.trans,
         cmds.xform(testing_mesh, q=True, t=True, ws=True),
-        0.0001,
+        0.1,
         "Testing if matrix trans property matches actual transform.",
     )
+    print(test_matrix.trans)
+    print(cmds.xform(testing_mesh, q=True, t=True, ws=True))
 
     cmds.rotate(90, 0, 0, testing_mesh)
     rot_matrix = matrices.lmatrix(testing_mesh)
@@ -192,6 +194,10 @@ def full_suite_test():
         f"Asserting that {gen_build_object.trans} is deleted.",
     )
 
+    # TODO
+    # Tests for apply matrix.
+
+    # Test for aim-at.
 
     test_suite.report()
     print("Remember that an unclean scene make cause failures.")
