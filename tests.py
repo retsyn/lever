@@ -207,8 +207,6 @@ def full_suite_test():
         f"Asserting that {gen_build_object.trans} is deleted.",
     )
 
-    # TODO
-    # Tests for apply matrix.
 
     # Test for aim-at.
 

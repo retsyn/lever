@@ -87,7 +87,7 @@ class lmatrix:
         transform_fn = om2.MFnTransform(dag_path)
 
         # Set the translation component of the transformation matrix
-        #transform_fn.setTranslation(self.precise_trans) WHAT IS THE OTHER ARG FOR THIS?
+        # transform_fn.setTranslation(self.precise_trans) WHAT IS THE OTHER ARG FOR THIS?
         # Now how do I get the rotation?
 
     @property
@@ -95,13 +95,13 @@ class lmatrix:
         return (
             dc.Decimal(self.mmatrix[12]),
             dc.Decimal(self.mmatrix[13]),
-            dc.Decimal(self.mmatrix[14])
+            dc.Decimal(self.mmatrix[14]),
         )
 
     @property
     def trans(self) -> tuple:
         return (self.mmatrix[12], self.mmatrix[13], self.mmatrix[14])
-    
+
     @trans.setter
     def trans(self, value: iter):
         """Sets the fourth row values to reflect the given iterable.
@@ -177,12 +177,29 @@ class lmatrix:
 
     def aim(
         self,
+        subject: str,
         primary_target: str,
         secondary_target: str,
         primary_axis="y",
         secondary_axis="x",
     ):
-        for node_name in [primary_target, secondary_target]:
+        """Will 'aim' a matrix at a target object, and orient it's secondary axis to another
+        object.
+
+        Args:
+            subject (str): The object to aim.
+            primary_target (str): The target object to aim at.
+            secondary_target (str): The target object to align the secondary axis to.
+            primary_axis (str, optional): Which axis should be aimed. Defaults to "y".
+            secondary_axis (str, optional): Which axis should be secondary. Defaults to "x".
+
+        Raises:
+            ValueError: If one of the targets does not exist.
+            TypeError: If one of the targets isn't a transform or joint.
+            ValueError: If one of the axis isn't described by an appropriate letter.
+            ValueError: If the primary and secondary axis are the same.
+        """        
+        for node_name in [subject, primary_target, secondary_target]:
             if cmds.objExists(node_name) == False:
                 raise ValueError(
                     f"{node_name} doesn't exist in the scene or is not unique."
@@ -196,7 +213,61 @@ class lmatrix:
                     f"primary and secondary axis must be 'x', 'y', or 'z', not {axis_value}."
                 )
 
-        pass
+        if secondary_axis == primary_axis:
+            raise ValueError(
+                f"Primary and secondary axis were both {primary_axis}.  The need to differ."
+            )
+
+        # Calculate normalized line vector between subject and target
+        pos_a = vectors.LVector(cmds.xform(subject, q=True, t=True, ws=True))
+        pos_b = vectors.LVector(cmds.xform(primary_target, q=True, t=True, ws=True))
+        primary_vector = vectors.get_line(pos_a, pos_b)
+        primary_vector.normalize()
+
+        # Calculate normalized line vector between subject and secondary axis target
+        pos_c = vectors.LVector(cmds.xform(secondary_target, q=True, t=True, ws=True))
+        secondary_vector = vectors.get_line(pos_a, pos_c)
+        secondary_vector.normalize()
+
+        # Derive tertiary axis
+        tertiary_vector = primary_vector.cross_prod(secondary_vector)
+        tertiary_vector.normalize()
+
+        # 'Sanitize' secondary vector:
+        secondary_vector = primary_vector.cross_prod(tertiary_vector)
+        secondary_vector.normalize()
+
+        # Set the matrix content
+        unused_axis = ["x", "y", "z"]
+        # Match case not available in this Mayapy.
+        # The aimed vector in the primary chosen axis:
+        if primary_axis == "x":
+            self.x_vector = primary_vector
+            unused_axis.remove("x")
+        elif primary_axis == "y":
+            self.y_vector = primary_vector
+            unused_axis.remove("y")
+        elif primary_axis == "z":
+            self.z_vector = primary_vector
+            unused_axis.remove("z")
+
+        # The 'up' vector (secondary axis) in chosen secondary axis.
+        if secondary_axis == "x":
+            self.x_vector = secondary_vector
+            unused_axis.remove("x")
+        elif secondary_axis == "y":
+            self.y_vector = secondary_vector
+            unused_axis.remove("y")
+        elif secondary_axis == "z":
+            self.z_vector = secondary_vector
+            unused_axis.remove("z")
+
+        if unused_axis[0] == "x":
+            self.x_vector = tertiary_vector
+        elif unused_axis[0] == "y":
+            self.y_vector = tertiary_vector
+        elif unused_axis[0] == "z":
+            self.z_vector = tertiary_vector
 
     def __getitem__(self, i):
         return self.mmatrix[i]
