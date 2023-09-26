@@ -14,122 +14,26 @@ from . import vectors
 dc.getcontext().prec = 32
 
 
-class lmatrix:
-    def __init__(self, node: str):
-        """Given a transform node, return a MMatrix of it's position.
+class LMatrix:
+    def __init__(self, matrix=om2.MTransformationMatrix()):
+        self.matrix = matrix
 
-        Args:
-            node (str): The name of the node.  Must exist and be unique.
-
-        Raises:
-            ValueError: If the node isn't found in scene or isn't unique.
-            TypeError: If the node doesn't have transform properties.
+    def _as_mmatrix(self) -> om2.MMatrix:
+        """Convert to om2.MMatrix, which has more low-level access.
 
         Returns:
-            MMatrix: Usable matrix data (from om2.)
+            om2.MMatrix: The MMatrix with the mutable elements.
         """
-
-        if cmds.objExists == False:
-            raise ValueError(
-                f"{node} isn't a node found in the scene (Or is not unique)."
-            )
-        elif cmds.objectType(node) not in ["joint", "transform"]:
-            raise TypeError(f"{node} is not of type joint or transform.")
-
-        # Get a dagpath in order toget a MFnTransform in order to return a MMatrix.
-        selection_list = om2.MGlobal.getSelectionListByName(node)
-        dag_path = selection_list.getDagPath(0)
-        transform_fn = om2.MFnTransform(dag_path)
-
-        self.mmatrix = transform_fn.transformation().asMatrix()
-
-        self.x_vector = (
-            dc.Decimal(self.mmatrix[0]),
-            dc.Decimal(self.mmatrix[1]),
-            dc.Decimal(self.mmatrix[2]),
-        )
-        self.y_vector = (
-            dc.Decimal(self.mmatrix[4]),
-            dc.Decimal(self.mmatrix[5]),
-            dc.Decimal(self.mmatrix[6]),
-        )
-        self.z_vector = (
-            dc.Decimal(self.mmatrix[8]),
-            dc.Decimal(self.mmatrix[9]),
-            dc.Decimal(self.mmatrix[10]),
-        )
-
-        self.trans = (
-            dc.Decimal(self.mmatrix[12]),
-            dc.Decimal(self.mmatrix[13]),
-            dc.Decimal(self.mmatrix[14]),
-        )
-
-    def apply(self, node: str):
-        """Applies the mmatrix attribute to any nodes given by argument.
-
-        Args:
-            node (str): Unique name of a node in scene.
-
-        Raises:
-            ValueError: If the node doesn't exist or isn't unique.
-            TypeError: If the node isn't a transform or joint.
-        """
-        if cmds.objExists(node) == False:
-            raise ValueError(f"{node} doesn't name a unique node found in the scene.")
-        if cmds.nodeType(node) not in ["transform", "joint"]:
-            raise TypeError(
-                f"{node} is not joint or transform.  Can't apply a MMatrix."
-            )
-        # Create an MFnTransform function set for the transform node
-        selection_list = om2.MGlobal.getSelectionListByName(node)
-        dag_path = selection_list.getDagPath(0)
-        transform_fn = om2.MFnTransform(dag_path)
-
-        # Set the translation component of the transformation matrix
-        # transform_fn.setTranslation(self.precise_trans) WHAT IS THE OTHER ARG FOR THIS?
-        # Now how do I get the rotation?
-
-    @property
-    def precise_trans(self) -> tuple:
-        return (
-            dc.Decimal(self.mmatrix[12]),
-            dc.Decimal(self.mmatrix[13]),
-            dc.Decimal(self.mmatrix[14]),
-        )
-
-    @property
-    def trans(self) -> tuple:
-        return (self.mmatrix[12], self.mmatrix[13], self.mmatrix[14])
-
-    @trans.setter
-    def trans(self, value: iter):
-        """Sets the fourth row values to reflect the given iterable.
-        Args:
-            value (iter): Tuple or list with three elements.
-
-        Raises:
-            TypeError: If anything within the iterable isn't the right type.
-            ValueError: If the iterable contains more or less than 3 elements.
-        """
-
-        for val in value:
-            if isinstance(val, (float, int, dc.Decimal)) == False:
-                raise TypeError(f"{val} is not a float or int.")
-
-        if len(value) != 3:
-            raise ValueError(f"{value} doesn't contain exactly three values.")
-
-        self.mmatrix[12] = value[0]
-        self.mmatrix[13] = value[1]
-        self.mmatrix[14] = value[2]
+        return self.matrix.asMatrix()
 
     @property
     def x_vector(self) -> tuple:
-        return (self.mmatrix[0], self.mmatrix[1], self.mmatrix[2])
+        matrix = self._as_mmatrix()
+        return (matrix[0], matrix[1], matrix[2])
 
     @x_vector.setter
     def x_vector(self, value: iter):
+        matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
@@ -137,16 +41,20 @@ class lmatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
-        self.mmatrix[0] = value[0]
-        self.mmatrix[1] = value[1]
-        self.mmatrix[2] = value[2]
+        matrix[0] = value[0]
+        matrix[1] = value[1]
+        matrix[2] = value[2]
+
+        self.matrix = om2.MTransformationMatrix(matrix)
 
     @property
     def y_vector(self) -> tuple:
-        return (self.mmatrix[4], self.mmatrix[5], self.mmatrix[6])
+        matrix = self._as_mmatrix()
+        return (matrix[4], matrix[5], matrix[6])
 
     @y_vector.setter
     def y_vector(self, value: iter):
+        matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
@@ -154,16 +62,20 @@ class lmatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
-        self.mmatrix[4] = value[0]
-        self.mmatrix[5] = value[1]
-        self.mmatrix[6] = value[2]
+        matrix[4] = value[4]
+        matrix[5] = value[5]
+        matrix[6] = value[6]
+
+        self.matrix = om2.MTransformationMatrix(matrix)
 
     @property
     def z_vector(self) -> tuple:
-        return (self.mmatrix[8], self.mmatrix[9], self.mmatrix[10])
+        matrix = self._as_mmatrix()
+        return (matrix[4], matrix[5], matrix[6])
 
     @z_vector.setter
     def z_vector(self, value: iter):
+        matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{val} is not a float or int.")
@@ -171,9 +83,19 @@ class lmatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
-        self.mmatrix[8] = value[0]
-        self.mmatrix[9] = value[1]
-        self.mmatrix[10] = value[2]
+        matrix[8] = value[8]
+        matrix[9] = value[9]
+        matrix[10] = value[10]
+
+        self.matrix = om2.MTransformationMatrix(matrix)
+
+    def __getitem__(self, i):
+        matrix = self._as_mmatrix()
+        return matrix[i]
+
+    def __setitem__(self, i, value):
+        matrix = self._as_mmatrix
+        matrix[i] = value
 
     def aim(
         self,
@@ -198,7 +120,8 @@ class lmatrix:
             TypeError: If one of the targets isn't a transform or joint.
             ValueError: If one of the axis isn't described by an appropriate letter.
             ValueError: If the primary and secondary axis are the same.
-        """        
+        """
+
         for node_name in [subject, primary_target, secondary_target]:
             if cmds.objExists(node_name) == False:
                 raise ValueError(
@@ -269,8 +192,26 @@ class lmatrix:
         elif unused_axis[0] == "z":
             self.z_vector = tertiary_vector
 
-    def __getitem__(self, i):
-        return self.mmatrix[i]
+    def apply_to_transform(self, node_name: str):
+        """Applies the transformation defined by this matrix.
 
-    def __setitem__(self, i, value):
-        self.mmatrix[i] = value
+        Args:
+            node_name (str): A unique node name in the scene.
+
+        Raises:
+            NameError: If the name doesn't exist in the scene (or is not unique.)
+            TypeError: If the node named isn't an appropriate transform.
+        """        
+        if cmds.objExists(node_name) == False:
+            raise NameError(f"{node_name} not found in scene or is not unique.")
+        if cmds.objectType(node_name) not in ["transform", "joint"]:
+            raise TypeError(
+                f"{node_name} is type {cmds.objectType(node_name)}, must be transform or joint."
+            )
+        
+        sel = om2.MSelectionList()
+        sel.add(node_name)
+        dag_path = sel.getDagPath(0)
+        
+        transform_fn = om2.MFnTransform(dag_path)
+        transform_fn.set(self.matrix)

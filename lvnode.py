@@ -7,6 +7,12 @@ Modified By: Matthew Riche
 """
 
 import maya.cmds as cmds
+import maya.api.OpenMaya as om2
+import math
+import decimal as dc
+from . import vectors
+
+dc.getcontext().prec = 32
 
 
 class LvNode:
@@ -61,7 +67,7 @@ class LvNode:
 
     @translate.setter
     def translate(self, value):
-        if(isinstance(value, (float, int))):
+        if isinstance(value, (float, int)):
             raise TypeError("Translate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Translate value requires three elements.")
@@ -71,9 +77,6 @@ class LvNode:
     @property
     def local_translate(self):
         return cmds.xform(self.long_name, q=True, t=True, ws=False, a=True)
-    
-
-    
 
     @property
     def rotate(self):
@@ -81,13 +84,14 @@ class LvNode:
 
     @rotate.setter
     def rotate(self, value):
-        if(isinstance(value, (float, int))):
+        if isinstance(value, (float, int)):
             raise TypeError("Rotate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Rotate value requires three elements.")
 
         cmds.xform(self.long_name, q=False, ro=value, ws=True, a=True)
 
-
     def __str__(self):
-        return (f"<LvNode>'{self.name}'")
+        return f"<LvNode>'{self.name}'"
+
+
