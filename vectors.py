@@ -14,6 +14,7 @@ from maya.api.OpenMaya import MVector
 import maya.cmds as cmds
 import logging as log
 import decimal as dc
+from .console import dprint
 
 dc.getcontext().prec = 32
 
@@ -38,6 +39,7 @@ class LVector:
             TypeError: If anything inside the iterable isn't a usable number.
             ValueError: If the number of elements isn't exactly 3.
         """
+        dprint(f"Vector is \"{vector}\"")
         for v in vector:
             if isinstance(v, (float, int, dc.Decimal) == False):
                 raise TypeError(f"{v} must be a float or int, not {type(v)}.")

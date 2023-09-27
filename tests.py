@@ -148,10 +148,12 @@ def full_suite_test():
     new_expression = rigspec.Expression(
         "placer: p=(12, 38, 2), n=hellow, c=yellow, type=1"
     )
+    # TODO put in tests for each value of the expression.
 
     # Testing Matrices
-    test_matrix = matrices.lmatrix(testing_mesh)
-    test_matrix2 = matrices.lmatrix(testing_mesh2)
+    test_matrix = matrices.LMatrix(testing_mesh)
+    print(test_matrix.matrix)
+    test_matrix2 = matrices.LMatrix(testing_mesh2)
     test_suite.assert_near(
         test_matrix.trans,
         cmds.xform(testing_mesh, q=True, t=True, ws=True),

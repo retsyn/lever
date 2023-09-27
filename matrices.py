@@ -15,8 +15,14 @@ dc.getcontext().prec = 32
 
 
 class LMatrix:
-    def __init__(self, matrix=om2.MTransformationMatrix()):
-        self.matrix = matrix
+    def __init__(self, node: str):
+        # TODO Sanitize node
+
+        sel_list = om2.MGlobal.getSelectionListByName(node)
+        transform_dag = sel_list.getDagPath(0)
+        transform_fn = om2.MFnTransform(transform_dag)
+
+        self.matrix = transform_fn.transformation()
 
     def _as_mmatrix(self) -> om2.MMatrix:
         """Convert to om2.MMatrix, which has more low-level access.
@@ -88,6 +94,14 @@ class LMatrix:
         matrix[10] = value[10]
 
         self.matrix = om2.MTransformationMatrix(matrix)
+
+    @property
+    def trans(self):
+        return vectors.LVector((self.matrix.translation(om2.MSpace.kWorld)))
+
+    @trans.setter
+    def trans(self, value: iter):
+        self.matrix.setTranslation(om2.MVector(value), om2.MSpace.kWorld)
 
     def __getitem__(self, i):
         matrix = self._as_mmatrix()
@@ -201,17 +215,17 @@ class LMatrix:
         Raises:
             NameError: If the name doesn't exist in the scene (or is not unique.)
             TypeError: If the node named isn't an appropriate transform.
-        """        
+        """
         if cmds.objExists(node_name) == False:
             raise NameError(f"{node_name} not found in scene or is not unique.")
         if cmds.objectType(node_name) not in ["transform", "joint"]:
             raise TypeError(
                 f"{node_name} is type {cmds.objectType(node_name)}, must be transform or joint."
             )
-        
+
         sel = om2.MSelectionList()
         sel.add(node_name)
         dag_path = sel.getDagPath(0)
-        
+
         transform_fn = om2.MFnTransform(dag_path)
         transform_fn.set(self.matrix)
