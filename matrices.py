@@ -10,15 +10,30 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 import decimal as dc
 from . import vectors
+from .lvnode import LvNode
+from .console import dprint
+from typing import Union
+
 
 dc.getcontext().prec = 32
 
 
 class LMatrix:
-    def __init__(self, node: str):
-        # TODO Sanitize node
+    def __init__(self, node: Union[str, LvNode]):
+        if isinstance(node, str):
+            if cmds.objExists(node) == False:
+                raise ValueError(f"{node} isn't found in the scene or is not unique.")
+            elif cmds.nodeType(node) not in ["transform", "joint"]:
+                raise TypeError(
+                    f"{node} is not a type that has a transform, so can't make a Matrix."
+                )
+            node_name = node
+        elif isinstance(node, LvNode):
+            dprint(f"Converting {node} to just {node.name}")
+            node_name = node.name
 
-        sel_list = om2.MGlobal.getSelectionListByName(node)
+        dprint(f"Making a matrix for the node {node_name}")
+        sel_list = om2.MGlobal.getSelectionListByName(node_name)
         transform_dag = sel_list.getDagPath(0)
         transform_fn = om2.MFnTransform(transform_dag)
 
@@ -77,7 +92,7 @@ class LMatrix:
     @property
     def z_vector(self) -> tuple:
         matrix = self._as_mmatrix()
-        return (matrix[4], matrix[5], matrix[6])
+        return (matrix[8], matrix[9], matrix[10])
 
     @z_vector.setter
     def z_vector(self, value: iter):
@@ -113,9 +128,9 @@ class LMatrix:
 
     def aim(
         self,
-        subject: str,
-        primary_target: str,
-        secondary_target: str,
+        subject: Union[str, LvNode],
+        primary_target: Union[str, LvNode],
+        secondary_target: Union[str, LvNode],
         primary_axis="y",
         secondary_axis="x",
     ):
@@ -135,6 +150,13 @@ class LMatrix:
             ValueError: If one of the axis isn't described by an appropriate letter.
             ValueError: If the primary and secondary axis are the same.
         """
+
+        if(isinstance(subject, LvNode)):
+            subject = subject.name
+        if(isinstance(primary_target, LvNode)):
+            primary_target = primary_target.name
+        if(isinstance(secondary_target, LvNode)):
+            secondary_target = secondary_target.name
 
         for node_name in [subject, primary_target, secondary_target]:
             if cmds.objExists(node_name) == False:
@@ -228,4 +250,4 @@ class LMatrix:
         dag_path = sel.getDagPath(0)
 
         transform_fn = om2.MFnTransform(dag_path)
-        transform_fn.set(self.matrix)
+        transform_fn.setTransformation(self.matrix)

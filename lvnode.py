@@ -39,7 +39,7 @@ class LvNode:
         Returns:
             str: In-Scene node name.
         """
-        return cmds.ls(self.uuid, uuid=True, long=False)
+        return cmds.ls(self.uuid, uuid=True, long=False)[0]
 
     @name.setter
     def name(self, value: str):
@@ -59,7 +59,7 @@ class LvNode:
             str: The full pathed name.
         """
 
-        return cmds.ls(self.uuid, uuid=True, long=True)
+        return cmds.ls(self.uuid, uuid=True, long=True)[0]
 
     @property
     def translate(self):
@@ -67,10 +67,11 @@ class LvNode:
 
     @translate.setter
     def translate(self, value):
-        if isinstance(value, (float, int)):
-            raise TypeError("Translate values must be lists or tuples.")
         if len(value) != 3:
             raise ValueError("Translate value requires three elements.")
+        for v in value:
+            if(isinstance(v, (float, int, dc.Decimal)) == False):
+                raise TypeError(f"{v} is not float, int, or Decimal.")
 
         cmds.xform(self.long_name, q=False, t=value, ws=True, a=True)
 

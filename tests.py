@@ -165,26 +165,30 @@ def full_suite_test():
 
     # Rotate the testing meshes in predicted and random orientations for vector tests.
     cmds.rotate(90, 0, 0, testing_mesh)
+    print("Rotated the test_mesh.")
     random_rot = random_vector()
     cmds.rotate(random_rot[0], random_rot[1], random_rot[2], testing_mesh2)
-    rot_matrix = matrices.lmatrix(testing_mesh)
+    rot_matrix = matrices.LMatrix(testing_mesh)
+    print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector}")
     test_suite.assert_true(
         rot_matrix.x_vector == (1.0, 0.0, 0.0),
         "Testing x_vector member of lmatrix is unchanged.",
     )
 
+    print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector}")
     test_suite.assert_true(
         rot_matrix.y_vector == (0.0, 0.0, 1.0),
-        "Testing x_vector member of lmatrix points scene-forward.",
+        "Testing y_vector member of lmatrix points scene-forward.",
     )
 
+    print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector}")
     test_suite.assert_true(
         rot_matrix.z_vector == (0.0, -1.0, 0.0),
         "Testing z_vector member of lmatrix points scene-down.",
     )
 
     # Apply the matrix taken from testing_mesh2 to testing_mesh1
-    test_matrix2.apply(testing_mesh)
+    test_matrix2.apply_to_transform(testing_mesh)
 
     test_suite.assert_near(
         cmds.xform(testing_mesh, q=True, t=True, ws=True),
@@ -211,6 +215,15 @@ def full_suite_test():
 
 
     # Test for aim-at.
+    test_subject = lvnode.LvNode(cmds.spaceLocator(n="test_subject")[0])
+    aim_target = lvnode.LvNode(cmds.spaceLocator(n="aim_at_me")[0])
+    secondary_target = lvnode.LvNode(cmds.spaceLocator(n="seconary_aim")[0])
+    aim_target.translate = (10, 10, 0)
+    secondary_target.translate = (0, 0, -10)
+
+    aimed_matrix = matrices.LMatrix(test_subject)
+    aimed_matrix.aim(test_subject, test_subject, aim_target)
+
 
     test_suite.report()
     print("Remember that an unclean scene make cause failures.")

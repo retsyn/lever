@@ -14,18 +14,20 @@ from maya.api.OpenMaya import MVector
 import maya.cmds as cmds
 import logging as log
 import decimal as dc
-from .console import dprint
-
+from typing import Union
+from . console import dprint
+from . lvnode import LvNode
 dc.getcontext().prec = 32
 
 
 class LVector:
-    def __init__(self, vector: iter):
+    def __init__(self, vector: Union[iter, LvNode]):
         """A wrapper of mvector for simple access outside.
 
         Args:
             vector (iter): an iterable containing 3 floats.  Will be sanitized if values are wrong.
         """
+        dprint(f"Sanitizing vector {vector}")
         self._sanitize(vector)
         self.mvector = vector
 
@@ -41,9 +43,9 @@ class LVector:
         """
         dprint(f"Vector is \"{vector}\"")
         for v in vector:
-            if isinstance(v, (float, int, dc.Decimal) == False):
+            if isinstance(v, (float, int, dc.Decimal)) == False:
                 raise TypeError(f"{v} must be a float or int, not {type(v)}.")
-        if len(vector != 3):
+        if len(vector) != 3:
             raise ValueError(f"{vector} doesn't have the right number of elements.")
 
     def cross_prod(self, vector2: iter):
