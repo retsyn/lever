@@ -1,11 +1,10 @@
-'''
+"""
 vectors.py
 Created: Saturday, 29th July 2023 2:42:55 pm
 Matthew Riche
 Last Modified: Sunday, 24th September 2023 5:06:00 pm
 Modified By: Matthew Riche
-'''
-
+"""
 
 
 # This module leverages MVector from om2 to provide vector math that is strong against FPP errors.
@@ -15,23 +14,23 @@ import maya.cmds as cmds
 import logging as log
 import decimal as dc
 from typing import Union
-from . console import dprint
-from . lvnode import LvNode
+from .console import dprint
+from .lvnode import LvNode
+
 dc.getcontext().prec = 32
 
 
 class LVector:
-    def __init__(self, vector: Union[iter, LvNode]):
+    def __init__(self, vector: iter):
         """A wrapper of mvector for simple access outside.
 
         Args:
             vector (iter): an iterable containing 3 floats.  Will be sanitized if values are wrong.
         """
-        dprint(f"Sanitizing vector {vector}")
+        self.mvector = MVector()
         self._sanitize(vector)
-        self.mvector = vector
 
-    def _sanitize(self, vector: iter):
+    def _sanitize(self, vector: Union[iter, MVector]):
         """Throws errors if values aren't a proper 3 element vector.
 
         Args:
@@ -41,12 +40,24 @@ class LVector:
             TypeError: If anything inside the iterable isn't a usable number.
             ValueError: If the number of elements isn't exactly 3.
         """
-        dprint(f"Vector is \"{vector}\"")
-        for v in vector:
-            if isinstance(v, (float, int, dc.Decimal)) == False:
-                raise TypeError(f"{v} must be a float or int, not {type(v)}.")
-        if len(vector) != 3:
-            raise ValueError(f"{vector} doesn't have the right number of elements.")
+        if isinstance(vector, (list, tuple)):
+            for v in vector:
+                if isinstance(v, (float, int, dc.Decimal)) == False:
+                    raise TypeError(f"{v} must be a float or int, not {type(v)}.")
+            if len(vector) != 3:
+                raise ValueError(f"{vector} doesn't have the right number of elements.")
+            self.mvector = MVector(vector)
+
+        elif isinstance(vector, LVector):
+            self.mvector = MVector(
+                (vector.precise_x, vector.precise_y, vector.precise_z)
+            )
+        elif isinstance(vector, MVector):
+            self.mvector = vector
+        else:
+            raise TypeError(
+                f"Provided vector to sanitize was {type(vector)} which is unhandled."
+            )
 
     def cross_prod(self, vector2: iter):
         """Calculate cross product between this vector an another given vector.
@@ -88,7 +99,7 @@ class LVector:
 
     @x.setter
     def x(self, value):
-        if isinstance(value, (float, int)):
+        if isinstance(value, (float, int, dc.Decimal)) == False:
             raise TypeError(f"{value} needs to be int or float.")
         self.mvector.x = value
 
@@ -102,7 +113,7 @@ class LVector:
 
     @y.setter
     def y(self, value):
-        if isinstance(value, (float, int)):
+        if isinstance(value, (float, int, dc.Decimal)) == False:
             raise TypeError(f"{value} needs to be int or float.")
         self.mvector.y = value
 
@@ -116,7 +127,7 @@ class LVector:
 
     @z.setter
     def z(self, value):
-        if isinstance(value, (float, int)):
+        if isinstance(value, (float, int, dc.Decimal)) == False:
             raise TypeError(f"{value} needs to be int or float.")
         self.mvector.z = value
 
@@ -133,9 +144,11 @@ class LVector:
         vector2 = self._sanitize(vector2)
 
         return LVector(
-            self.mvector.x + vector2.x,
-            self.mvector.y + vector2.y,
-            self.mvector.z + vector2.z,
+            (
+                self.mvector.x + vector2.x,
+                self.mvector.y + vector2.y,
+                self.mvector.z + vector2.z,
+            )
         )
 
     def __sub__(self, vector2: iter):
@@ -144,13 +157,27 @@ class LVector:
         Args:
             vector2 (iter): vector or iterable (will be sanitized)
         """
-        vector2 = self._sanitize(vector2)
+        vector2 = LVector(vector2)
 
         return LVector(
-            self.mvector.x - vector2.x,
-            self.mvector.y - vector2.y,
-            self.mvector.z - vector2.z,
+            (
+                self.mvector.x - vector2.x,
+                self.mvector.y - vector2.y,
+                self.mvector.z - vector2.z,
+            )
         )
+
+    def __len__(self) -> int:
+        """A len method to satisfy certain vector sanitization checks.
+        This will be a hard 3 if this class is doing it's job.
+
+        Returns:
+            int: Always 3.
+        """
+        return 3
+    
+    def __str__(self) -> str:
+        return (f"LVector(({self.x}, {self.y}, {self.z}))")
 
     def __getitem__(self, index: int) -> float:
         """When indexed, we expose whichever element of the mvector inside.

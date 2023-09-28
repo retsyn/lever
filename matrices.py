@@ -29,7 +29,6 @@ class LMatrix:
                 )
             node_name = node
         elif isinstance(node, LvNode):
-            dprint(f"Converting {node} to just {node.name}")
             node_name = node.name
 
         dprint(f"Making a matrix for the node {node_name}")
@@ -83,9 +82,9 @@ class LMatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
-        matrix[4] = value[4]
-        matrix[5] = value[5]
-        matrix[6] = value[6]
+        matrix[4] = value[0]
+        matrix[5] = value[2]
+        matrix[6] = value[1]
 
         self.matrix = om2.MTransformationMatrix(matrix)
 
@@ -104,14 +103,15 @@ class LMatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
-        matrix[8] = value[8]
-        matrix[9] = value[9]
-        matrix[10] = value[10]
+        matrix[8] = value[0]
+        matrix[9] = value[1]
+        matrix[10] = value[2]
 
         self.matrix = om2.MTransformationMatrix(matrix)
 
     @property
     def trans(self):
+        dprint(f"Generating a value from a {type(self.matrix.translation(om2.MSpace.kWorld))}")
         return vectors.LVector((self.matrix.translation(om2.MSpace.kWorld)))
 
     @trans.setter
@@ -228,7 +228,7 @@ class LMatrix:
         elif unused_axis[0] == "z":
             self.z_vector = tertiary_vector
 
-    def apply_to_transform(self, node_name: str):
+    def apply_to_transform(self, node_name: Union[str, LvNode]):
         """Applies the transformation defined by this matrix.
 
         Args:
@@ -238,6 +238,8 @@ class LMatrix:
             NameError: If the name doesn't exist in the scene (or is not unique.)
             TypeError: If the node named isn't an appropriate transform.
         """
+        if(isinstance(node_name, LvNode)):
+            node_name = node_name.name
         if cmds.objExists(node_name) == False:
             raise NameError(f"{node_name} not found in scene or is not unique.")
         if cmds.objectType(node_name) not in ["transform", "joint"]:
