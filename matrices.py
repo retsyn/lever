@@ -53,6 +53,7 @@ class LMatrix:
 
     @x_vector.setter
     def x_vector(self, value: iter):
+        print(f"Value provided is {value}")
         matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
@@ -74,6 +75,7 @@ class LMatrix:
 
     @y_vector.setter
     def y_vector(self, value: iter):
+        print(f"Value provided is {value}")
         matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
@@ -87,6 +89,8 @@ class LMatrix:
         matrix[6] = value[1]
 
         self.matrix = om2.MTransformationMatrix(matrix)
+        print(f"Y Vector of {self} set to {(matrix[4], matrix[5], matrix[6])}")
+
 
     @property
     def z_vector(self) -> tuple:
@@ -95,6 +99,7 @@ class LMatrix:
 
     @z_vector.setter
     def z_vector(self, value: iter):
+        print(f"Value provided is {value}")
         matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
@@ -200,26 +205,36 @@ class LMatrix:
         unused_axis = ["x", "y", "z"]
         # Match case not available in this Mayapy.
         # The aimed vector in the primary chosen axis:
+        print(f"Unused Axis are {unused_axis}")
+        print(f"Vectors are:\n{primary_vector}\n{secondary_vector}\n{tertiary_vector}")
         if primary_axis == "x":
             self.x_vector = primary_vector
             unused_axis.remove("x")
+
         elif primary_axis == "y":
             self.y_vector = primary_vector
             unused_axis.remove("y")
+
         elif primary_axis == "z":
             self.z_vector = primary_vector
             unused_axis.remove("z")
 
         # The 'up' vector (secondary axis) in chosen secondary axis.
+        print(f"Unused Axis are {unused_axis}")
         if secondary_axis == "x":
             self.x_vector = secondary_vector
             unused_axis.remove("x")
+
         elif secondary_axis == "y":
             self.y_vector = secondary_vector
             unused_axis.remove("y")
+
         elif secondary_axis == "z":
             self.z_vector = secondary_vector
             unused_axis.remove("z")
+
+
+        print(f"Unused Axis are {unused_axis}")
 
         if unused_axis[0] == "x":
             self.x_vector = tertiary_vector

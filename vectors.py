@@ -68,8 +68,9 @@ class LVector:
         Returns:
             MVector: A new MVector value.
         """
-        self._sanitize(vector2)
-        vector2 = MVector(vector2)
+        vector2 = LVector(vector2) # Forces sanitization.
+        vector2 = MVector(vector2) # Gives us precise arithmetic.
+
         cross_prod = self.mvector ^ vector2
 
         return LVector(cross_prod)
@@ -83,7 +84,8 @@ class LVector:
         Returns:
             float: _description_
         """
-        self._sanitize(vector2)
+        vector2 = LVector(vector2)
+        vector2 = MVector(vector2)
 
         return LVector(self.mvector * vector2)
 

@@ -253,6 +253,7 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     secondary_target.translate = (0, 0, -10)
 
     aimed_matrix = matrices.LMatrix(test_subject)
+    print(f"{aimed_matrix.x_vector}\n{aimed_matrix.y_vector}\n{aimed_matrix.z_vector}")
     aimed_matrix.aim(test_subject, aim_target, secondary_target)
 
     aimed_matrix.apply_to_transform(test_subject)
@@ -297,6 +298,9 @@ def vectors_test(test_suite: munit.SuiteUnitTest):
         (new_vec.z - b_vec.z),
         f"z attribute correctly resolving to {neg_vec.z}",
     )
+
+    # Get Line test.
+
 
 
 def full_suite_test():
