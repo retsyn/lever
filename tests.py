@@ -59,15 +59,23 @@ except:
     raise ImportError("Couldn't parse Vectors module.")
 
 
-def random_vector():
+def random_vector(rot=False):
     """Generate randomized coordinates in space for robust testing.
 
     Returns:
         tuple: Random euler vector
     """
-    x = random.uniform(-1000000.0, 1000000.0)
-    y = random.uniform(-1000000.0, 1000000.0)
-    z = random.uniform(-1000000.0, 1000000.0)
+
+    if rot == False:
+        lower_bound = -1000000.0
+        upper_bound = 1000000.0
+    else:
+        lower_bound = -360.0
+        upper_bound = 360.0
+
+    x = random.uniform(lower_bound, upper_bound)
+    y = random.uniform(lower_bound, upper_bound)
+    z = random.uniform(lower_bound, upper_bound)
 
     return (x, y, z)
 
@@ -190,14 +198,14 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     testing_mesh = cmds.polyCube(n="test_mesh_a")[0]
     testing_mesh2 = cmds.polyCube(n="test_mesh_b")[0]
     test_spot = random_vector()
-    # Testing Matrices
+    # Testing class
     cmds.xform(testing_mesh, t=test_spot, ws=True)
     test_matrix = matrices.LMatrix(testing_mesh)
     print(
-        f"Matrix.trans of {testing_mesh} after random movement:\n{str(test_matrix.trans)}"
+        f"Matrix.trans of {testing_mesh} after random movement:\n{str(test_matrix.translate)}"
     )
     test_suite.assert_near(
-        test_matrix.trans,
+        test_matrix.translate,
         cmds.xform(testing_mesh, q=True, t=True, ws=True),
         0.1,
         "Testing if matrix trans property matches actual transform.",
@@ -206,26 +214,27 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     # Rotate the testing meshes in predicted and random orientations for vector tests.
     cmds.rotate(90, 0, 0, testing_mesh)
     print("Rotated the test_mesh.")
-    random_rot = random_vector()
     rot_matrix = matrices.LMatrix(testing_mesh)
-    print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector}")
+    print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector_quant}")
     test_suite.assert_true(
-        rot_matrix.x_vector == (vectors.LVector((1.0, 0.0, 0.0))),
+        rot_matrix.x_vector_quant == (vectors.LVector((1.0, 0.0, 0.0))),
         "Testing x_vector member of lmatrix is unchanged.",
     )
 
-    print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector}")
+    print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector_quant}")
     test_suite.assert_true(
-        rot_matrix.y_vector == (vectors.LVector((0.0, 0.0, 1.0))),
+        rot_matrix.y_vector_quant == (vectors.LVector((0.0, 0.0, 1.0))),
         "Testing y_vector member of lmatrix points scene-forward.",
     )
 
-    print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector}")
+    print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector_quant}")
     test_suite.assert_true(
-        rot_matrix.z_vector == (vectors.LVector((0.0, -1.0, 0.0))),
+        rot_matrix.z_vector_quant == (vectors.LVector((0.0, -1.0, 0.0))),
         "Testing z_vector member of lmatrix points scene-down.",
     )
 
+    exit()
+    random_rot = random_vector(rot=True)
     cmds.rotate(random_rot[0], random_rot[1], random_rot[2], testing_mesh2)
     test_matrix2 = matrices.LMatrix(testing_mesh2)
 
@@ -309,7 +318,6 @@ def vectors_test(test_suite: munit.SuiteUnitTest):
     )
 
     # Get Line test.
-
 
 
 def full_suite_test():

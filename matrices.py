@@ -7,286 +7,216 @@ Modified By: Matthew Riche
 """
 
 import maya.cmds as cmds
-import maya.api.OpenMaya as om2
 import decimal as dc
-from . import vectors
-from . import visualize
-from .lvnode import LvNode
 from .console import dprint
 from typing import Union
+import math
 
-
-dc.getcontext().prec = 32
+dc.getcontext().prec = 17
+epsilon = dc.Decimal('1e-5')
 
 
 class LMatrix:
-    def __init__(self, node: Union[str, LvNode]):
-        if isinstance(node, str):
-            if cmds.objExists(node) == False:
-                raise ValueError(f"{node} isn't found in the scene or is not unique.")
-            elif cmds.nodeType(node) not in ["transform", "joint"]:
-                raise TypeError(
-                    f"{node} is not a type that has a transform, so can't make a Matrix."
-                )
-            node_name = node
-        elif isinstance(node, LvNode):
-            node_name = node.name
+    def __init__(self, node=""):
+        """A matrix class that leverages precise decimal values."""
+        self.matrix = [
+            [dc.Decimal(1.0), dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(0.0)],
+            [dc.Decimal(0.0), dc.Decimal(1.0), dc.Decimal(0.0), dc.Decimal(0.0)],
+            [dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(1.0), dc.Decimal(0.0)],
+            [dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(1.0)],
+        ]
 
-        dprint(f"Making a matrix for the node {node_name}")
-        sel_list = om2.MGlobal.getSelectionListByName(node_name)
-        transform_dag = sel_list.getDagPath(0)
-        transform_fn = om2.MFnTransform(transform_dag)
+        if node != "":
+            if isinstance(node, str):
+                if cmds.objectType(node) in ["transform", "joint"]:
+                    self.euler = cmds.xform(node, q=True, ro=True, ws=True)
+                    self.translate = cmds.xform(node, q=True, t=True, ws=True)
 
-        self.matrix = transform_fn.transformation()
+    def _wrap_radians(self, rad) -> dc.Decimal:
+        while rad <= -math.pi:
+            rad += 2 * math.pi
+            print(f"RAD increasing to {rad}")
 
-    def _as_mmatrix(self) -> om2.MMatrix:
-        """Convert to om2.MMatrix, which has more low-level access.
+        while rad > math.pi:
+            rad -= 2 * math.pi
+            print(f"RAD decreasing to {rad}")
+
+        return rad
+
+    def _3x3mult(self, matrix_a: list, matrix_b: list) -> list:
+        """Multiplies 3x3 matrices (for calculating euler rotations)
+
+        Args:
+            matrix_a (list): 3x3 matrix (two dimensional list)
+            matrix_b (list): 3x3 matrix (two dimensional list)
+
+        Raises:
+            ValueError: If the 3x3 Matrix isn't the right size.
 
         Returns:
-            om2.MMatrix: The MMatrix with the mutable elements.
+            list: 2D list containing 3x3 Matrix.
         """
-        return self.matrix.asMatrix()
+
+        # Guard corrupt input.
+        if len(matrix_a) != 3 or len(matrix_b) != 3:
+            raise ValueError(f"3x3mult only works on 3x3 matricies.")
+        for i in range(3):
+            if len(matrix_a[i]) != 3 or len(matrix_b[i]) != 3:
+                raise ValueError(f"3x3mult only works on 3x3 matricies.")
+            for j in range(3):
+                if (
+                    isinstance(matrix_a[i][j], (float, int, dc.Decimal)) == False
+                    or isinstance(matrix_b[i][j], (float, int, dc.Decimal)) == False
+                ):
+                    raise TypeError(
+                        f"Found that element [{i}][{j}] in one of the matrices isn't a number."
+                    )
+
+        # result matrix is all zeroes, since we will be multiplying on-top of it.
+        result = [
+            [dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(0.0)],
+            [dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(0.0)],
+            [dc.Decimal(0.0), dc.Decimal(0.0), dc.Decimal(0.0)],
+        ]
+
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    result[i][j] += dc.Decimal(matrix_a[i][k]) * dc.Decimal(
+                        matrix_b[k][j]
+                    )
+
+        return result
 
     @property
-    def x_vector(self) -> vectors.LVector:
-        matrix = self._as_mmatrix()
-        return vectors.LVector((matrix[0], matrix[1], matrix[2]))
+    def x_vector_quant(self):
+        return (self.matrix[0][0].quantize(epsilon, rounding=dc.ROUND_DOWN), 
+                self.matrix[0][1].quantize(epsilon, rounding=dc.ROUND_DOWN), 
+                self.matrix[0][2].quantize(epsilon, rounding=dc.ROUND_DOWN))
+    
+    @property
+    def y_vector_quant(self):
+        return (self.matrix[1][0].quantize(epsilon, rounding=dc.ROUND_DOWN), 
+                self.matrix[1][1].quantize(epsilon, rounding=dc.ROUND_DOWN), 
+                self.matrix[1][2].quantize(epsilon, rounding=dc.ROUND_DOWN))
 
+    @property
+    def z_vector_quant(self):
+        return (self.matrix[2][0].quantize(epsilon, rounding=dc.ROUND_DOWN), 
+                self.matrix[2][1].quantize(epsilon, rounding=dc.ROUND_DOWN), 
+                self.matrix[2][2].quantize(epsilon, rounding=dc.ROUND_DOWN))
+
+    @property
+    def x_vector(self):
+        return (self.matrix[0][0], self.matrix[0][1], self.matrix[0][2])
+            
     @x_vector.setter
-    def x_vector(self, value: iter):
-        matrix = self._as_mmatrix()
-        for val in value:
-            if isinstance(val, (float, int, dc.Decimal)) == False:
-                raise TypeError(f"{val} is not a float or int.")
-
-        if len(value) != 3:
-            raise ValueError(f"{value} doesn't contain exactly three values.")
-
-        print(f"x vector applying ({value[0]}, {value[1]}, {value[2]})")
-        matrix[0] = value[0]
-        matrix[1] = value[1]
-        matrix[2] = value[2]
-
-        self.matrix = om2.MTransformationMatrix(matrix)
+    def x_vector(self, vector: tuple):
+        self.matrix[0][0] = vector[0]
+        self.matrix[0][1] = vector[1]
+        self.matrix[0][2] = vector[2]
 
     @property
-    def y_vector(self) -> vectors.LVector:
-        matrix = self._as_mmatrix()
-        return vectors.LVector((matrix[4], matrix[5], matrix[6]))
+    def y_vector(self):
+        return (self.matrix[1][0], self.matrix[1][1], self.matrix[1][2])
 
     @y_vector.setter
-    def y_vector(self, value: iter):
-        matrix = self._as_mmatrix()
-        for val in value:
-            if isinstance(val, (float, int, dc.Decimal)) == False:
-                raise TypeError(f"{val} is not a float or int.")
-
-        if len(value) != 3:
-            raise ValueError(f"{value} doesn't contain exactly three values.")
-
-        print(f"y vector applying ({value[0]}, {value[1]}, {value[2]})")
-        matrix[4] = value[0]
-        matrix[5] = value[2]
-        matrix[6] = value[1]
-
-        self.matrix = om2.MTransformationMatrix(matrix)
+    def y_vector(self, vector: tuple):
+        self.matrix[1][0] = vector[0]
+        self.matrix[1][1] = vector[1]
+        self.matrix[1][2] = vector[2]
 
     @property
-    def z_vector(self) -> vectors.LVector:
-        matrix = self._as_mmatrix()
-        return vectors.LVector((matrix[8], matrix[9], matrix[10]))
+    def z_vector(self):
+        return (self.matrix[2][0], self.matrix[2][1], self.matrix[2][2])
 
     @z_vector.setter
-    def z_vector(self, value: iter):
-        matrix = self._as_mmatrix()
-        for val in value:
-            if isinstance(val, (float, int, dc.Decimal)) == False:
-                raise TypeError(f"{val} is not a float or int.")
-
-        if len(value) != 3:
-            raise ValueError(f"{value} doesn't contain exactly three values.")
-
-        print(f"z vector applying ({value[0]}, {value[1]}, {value[2]})")
-
-        matrix[8] = value[0]
-        matrix[9] = value[1]
-        matrix[10] = value[2]
-
-        self.matrix = om2.MTransformationMatrix(matrix)
+    def z_vector(self, vector: tuple):
+        self.matrix[2][0] = vector[0]
+        self.matrix[2][1] = vector[1]
+        self.matrix[2][2] = vector[2]
 
     @property
-    def trans(self):
-        dprint(
-            f"Generating a value from a {type(self.matrix.translation(om2.MSpace.kWorld))}"
+    def translate(self) -> tuple:
+        return (self.matrix[3][0], self.matrix[3][1], self.matrix[3][2])
+
+    @translate.setter
+    def translate(self, vector):
+        self.matrix[3][0] = vector[0]
+        self.matrix[3][1] = vector[1]
+        self.matrix[3][2] = vector[2]
+
+    @property
+    def euler(self) -> tuple:
+        """Calculate euler rotation defined by the matrix.
+
+        Returns:
+            tuple: Euler rotation (x, y, z)
+        """
+        rot_z = dc.Decimal(math.atan2(self.matrix[1][0], self.matrix[0][0]))
+        rot_y = dc.Decimal(
+            math.atan2(
+                -self.matrix[2][0],
+                math.sqrt(self.matrix[2][1] ** 2 + self.matrix[2][2] ** 2),
+            )
         )
-        return vectors.LVector((self.matrix.translation(om2.MSpace.kWorld)))
+        rot_x = dc.Decimal(math.atan2(self.matrix[2][1], self.matrix[2][2]))
 
-    @trans.setter
-    def trans(self, value: iter):
-        self.matrix.setTranslation(om2.MVector(value), om2.MSpace.kWorld)
+        # We need to wrap these radians.
+        rot_x = self._wrap_radians(rot_x)
+        rot_y = self._wrap_radians(rot_y)
+        rot_z = self._wrap_radians(rot_z)
 
-    def __getitem__(self, i):
-        matrix = self._as_mmatrix()
-        return matrix[i]
+        # Convert from rad 2 deg
+        rot_x = math.degrees(rot_x)
+        rot_y = math.degrees(rot_y)
+        rot_z = math.degrees(rot_z)
 
-    def __setitem__(self, i, value):
-        matrix = self._as_mmatrix
-        matrix[i] = value
-        self.matrix = matrix
+        # We keep the high precision Decimal type around during the math, but return basic floats.
+        return (float(rot_x), float(rot_y), float(rot_z))
 
-    def aim(
-        self,
-        subject: Union[str, LvNode],
-        primary_target: Union[str, LvNode],
-        secondary_target: Union[str, LvNode],
-        primary_axis="y",
-        secondary_axis="x",
-    ):
-        """Will 'aim' a matrix at a target object, and orient it's secondary axis to another
-        object.
+    @euler.setter
+    def euler(self, vector: tuple):
+        """Populates the matrix top 3x3 corner with vectors derived from euler angles.
 
         Args:
-            subject (str): The object to aim.
-            primary_target (str): The target object to aim at.
-            secondary_target (str): The target object to align the secondary axis to.
-            primary_axis (str, optional): Which axis should be aimed. Defaults to "y".
-            secondary_axis (str, optional): Which axis should be secondary. Defaults to "x".
-
-        Raises:
-            ValueError: If one of the targets does not exist.
-            TypeError: If one of the targets isn't a transform or joint.
-            ValueError: If one of the axis isn't described by an appropriate letter.
-            ValueError: If the primary and secondary axis are the same.
+            vector (tuple): _description_
         """
+        yaw = dc.Decimal(math.radians(vector[2]))
+        pitch = dc.Decimal(math.radians(vector[1]))
+        roll = dc.Decimal(math.radians(vector[0]))
 
-        if isinstance(subject, LvNode):
-            subject = subject.name
-        if isinstance(primary_target, LvNode):
-            primary_target = primary_target.name
-        if isinstance(secondary_target, LvNode):
-            secondary_target = secondary_target.name
+        # Rotation about Z (yaw)
+        R_z = [
+            [math.cos(yaw), -math.sin(yaw), 0],
+            [math.sin(yaw), math.cos(yaw), 0],
+            [0, 0, 1],
+        ]
 
-        for node_name in [subject, primary_target, secondary_target]:
-            if cmds.objExists(node_name) == False:
-                raise ValueError(
-                    f"{node_name} doesn't exist in the scene or is not unique."
-                )
-            if cmds.objectType(node_name) not in ["transform", "joint"]:
-                raise TypeError(f"{node_name} not of type joint or transform.")
+        # Rotation about Y (pitch)
+        R_y = [
+            [math.cos(pitch), 0, math.sin(pitch)],
+            [0, 1, 0],
+            [-math.sin(pitch), 0, math.cos(pitch)],
+        ]
 
-        for axis_value in [primary_axis, secondary_axis]:
-            if axis_value not in ["x", "y", "z"]:
-                raise ValueError(
-                    f"primary and secondary axis must be 'x', 'y', or 'z', not {axis_value}."
-                )
+        # Rotation about X (roll)
+        R_x = [
+            [1, 0, 0],
+            [0, math.cos(roll), -math.sin(roll)],
+            [0, math.sin(roll), math.cos(roll)],
+        ]
 
-        if secondary_axis == primary_axis:
-            raise ValueError(
-                f"Primary and secondary axis were both {primary_axis}.  The need to differ."
-            )
+        R_zy = self._3x3mult(R_z, R_y)
+        R_zyx = self._3x3mult(R_zy, R_x)
 
-        # Calculate normalized line vector between subject and target
-        pos_a = vectors.LVector(cmds.xform(subject, q=True, t=True, ws=True))
-        pos_b = vectors.LVector(cmds.xform(primary_target, q=True, t=True, ws=True))
-        primary_vector = vectors.get_line(pos_b, pos_a)
-        primary_vector.normalize()
-        visualize.show_vector(primary_vector, n="Primary_vector")
+        # Embedd the 3x3 into the corner of the 4x4.
+        for i in range(3):
+            for j in range(3):
+                self.matrix[i][j] = R_zyx[i][j]
 
-        # Calculate normalized line vector between subject and secondary axis target
-        pos_c = vectors.LVector(cmds.xform(secondary_target, q=True, t=True, ws=True))
-        secondary_vector = vectors.get_line(pos_a, pos_c)
-        secondary_vector.normalize()
-        visualize.show_vector(secondary_vector, n="unclean_seconardy_vector")
-
-        # Derive tertiary axis
-        tertiary_vector = primary_vector.cross_prod(secondary_vector)
-        tertiary_vector.normalize()
-        visualize.show_vector(tertiary_vector, n="tertiary_vector")
-
-        # 'Sanitize' secondary vector:
-        secondary_vector = primary_vector.cross_prod(tertiary_vector)
-        secondary_vector.normalize()
-        visualize.show_vector(secondary_vector, n="clean_seconary_vector")
-
-        # Set the matrix content
-        unused_axis = ["x", "y", "z"]
-        # Match case not available in this Mayapy.
-        # The aimed vector in the primary chosen axis:
-        if primary_axis == "x":
-            print(f"Primary vector is X:{primary_vector}")
-            self.x_vector = primary_vector
-            unused_axis.remove("x")
-            print(f"X vector is now {self.x_vector}")
-
-        elif primary_axis == "y":
-            print(f"Primary vector is Y:{primary_vector}")
-            self.y_vector = primary_vector
-            print(f"Y vector is now {self.y_vector}")
-            unused_axis.remove("y")
-
-        elif primary_axis == "z":
-            print(f"Primary vector is Z:{primary_vector}")
-            self.z_vector = primary_vector
-            unused_axis.remove("z")
-            print(f"Z vector is now {self.z_vector}")
-
-        # The 'up' vector (secondary axis) in chosen secondary axis.
-        if secondary_axis == "x":
-            print(f"Secondary Vector is X:{secondary_vector}")
-            self.x_vector = secondary_vector
-            unused_axis.remove("x")
-            print(f"X vector is now {self.x_vector}")
-
-        elif secondary_axis == "y":
-            print(f"Secondary Vector is Y:{secondary_vector}")
-            self.y_vector = secondary_vector
-            unused_axis.remove("y")
-            print(f"Y vector is now {self.y_vector}")
-
-        elif secondary_axis == "z":
-            print(f"Secondary Vector is Z:{secondary_vector}")
-            self.z_vector = secondary_vector
-            unused_axis.remove("z")
-            print(f"Z vector is now {self.z_vector}")
-
-        if unused_axis[0] == "x":
-            self.x_vector = tertiary_vector
-        elif unused_axis[0] == "y":
-            self.y_vector = tertiary_vector
-        elif unused_axis[0] == "z":
-            self.z_vector = tertiary_vector
-
-    def apply_to_transform(self, node_name: Union[str, LvNode]):
-        """Applies the transformation defined by this matrix.
-
-        Args:
-            node_name (str): A unique node name in the scene.
-
-        Raises:
-            NameError: If the name doesn't exist in the scene (or is not unique.)
-            TypeError: If the node named isn't an appropriate transform.
-        """
-        if isinstance(node_name, LvNode):
-            node_name = node_name.name
-        if cmds.objExists(node_name) == False:
-            raise NameError(f"{node_name} not found in scene or is not unique.")
-        if cmds.objectType(node_name) not in ["transform", "joint"]:
-            raise TypeError(
-                f"{node_name} is type {cmds.objectType(node_name)}, must be transform or joint."
-            )
-
-        sel = om2.MSelectionList()
-        sel.add(node_name)
-        dag_path = sel.getDagPath(0)
-
-        transform_fn = om2.MFnTransform(dag_path)
-        transform_fn.setTransformation(self.matrix)
-
-    def __str__(self):
-        mm = self._as_mmatrix()
-        string = f"\n[{mm[0]}, {mm[1]}, {mm[2]}, {mm[3]}]"
-        string += f"\n[{mm[4]}, {mm[5]}, {mm[6]}, {mm[7]}]"
-        string += f"\n[{mm[8]}, {mm[9]}, {mm[10]}, {mm[11]}]"
-        string += f"\n[{mm[12]}, {mm[13]}, {mm[14]}, {mm[15]}]"
-
-        return string
+    def apply_to_transform(self, node: str):
+        if cmds.objExists(node) == False:
+            raise ValueError(f"{node} not found in scene or not unique.")
+        cmds.xform(node, ro=self.euler, ws=True)
+        cmds.xform(node, t=self.translate, ws=True)
