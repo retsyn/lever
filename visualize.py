@@ -1,10 +1,10 @@
-"""
-debug.py
-Created: Monday, 2nd October 2023 4:45:39 pm
+'''
+visualize.py
+Created: Tuesday, 3rd October 2023 8:55:57 am
 Matthew Riche
-Last Modified: Monday, 2nd October 2023 4:45:46 pm
+Last Modified: Tuesday, 3rd October 2023 9:28:36 am
 Modified By: Matthew Riche
-"""
+'''
 
 
 # Debugging for other parts of the suite, or any tools using them.  Visualizes vectors and matrices
@@ -15,7 +15,12 @@ from maya.api.OpenMaya import MVector, MMatrix
 from . import vectors
 
 
-def show_vector(vector, start_point=vectors.LVector(0.0, 0.0, 0.0), n="debug_line_vector", colour=1):
+def show_vector(
+    vector,
+    start_point=(0.0, 0.0, 0.0),
+    n="debug_line_vector",
+    colour=1,
+):
     """Creates a 1-degree nurbsCurve in the scene that shows the magnitude and direction of a line
     Vector.
 
@@ -28,9 +33,11 @@ def show_vector(vector, start_point=vectors.LVector(0.0, 0.0, 0.0), n="debug_lin
         str: name of the nurbsCurve's transform node created in the scene.
     """
 
+    start_point = vectors.LVector(start_point)
+
     # There won't be any sanitization of the arg, since that's handled in the vectors module, and
     # this module is likely going to be debugging solely the work of that module.
-    vector = vector + start_point
+    vector = (vector + start_point)
     vector_line = cmds.curve(d=1, p=[start_point, vector], name=n)
 
     recolour(vector_line, colour=colour)

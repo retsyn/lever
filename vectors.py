@@ -58,6 +58,7 @@ class LVector:
             raise TypeError(
                 f"Provided vector to sanitize was {type(vector)} which is unhandled."
             )
+        
 
     def cross_prod(self, vector2: iter):
         """Calculate cross product between this vector an another given vector.
@@ -143,7 +144,8 @@ class LVector:
         Args:
             vector2 (iter): vector or iterable (will be sanitized)
         """
-        vector2 = self._sanitize(vector2)
+        vector2 = LVector(vector2)
+        vector2._sanitize(vector2)
 
         return LVector(
             (
@@ -201,6 +203,21 @@ class LVector:
             return self.mvector.z
         else:
             raise IndexError(f"Can't get index {index}, must be 0,1,2 for x,y,z.")
+        
+    def __eq__(self, other):
+        if(isinstance(other, (tuple, list, MVector))):
+            if(self.x == other[0] and self.y == other[1] and self.z == other[2]):
+                return True
+            else:
+                return False
+        elif(isinstance(other, LVector)):
+            if(self.x == other.x and self.y == other.y and self.z == other.z):
+                return True
+            else:
+                return False
+        else:
+            raise TypeError(f"Can't equate value {other} with {str(self)} because it's typed", 
+                            f"{type(other)}.")
 
 
 def plane_normal(point_a: iter, point_b: iter, point_c: iter) -> LVector:

@@ -10,6 +10,7 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om2
 import decimal as dc
 from . import vectors
+from . import visualize
 from .lvnode import LvNode
 from .console import dprint
 from typing import Union
@@ -47,13 +48,12 @@ class LMatrix:
         return self.matrix.asMatrix()
 
     @property
-    def x_vector(self) -> tuple:
+    def x_vector(self) -> vectors.LVector:
         matrix = self._as_mmatrix()
-        return (matrix[0], matrix[1], matrix[2])
+        return vectors.LVector((matrix[0], matrix[1], matrix[2]))
 
     @x_vector.setter
     def x_vector(self, value: iter):
-        print(f"Value provided is {value}")
         matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
@@ -62,6 +62,7 @@ class LMatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
+        print(f"x vector applying ({value[0]}, {value[1]}, {value[2]})")
         matrix[0] = value[0]
         matrix[1] = value[1]
         matrix[2] = value[2]
@@ -69,13 +70,12 @@ class LMatrix:
         self.matrix = om2.MTransformationMatrix(matrix)
 
     @property
-    def y_vector(self) -> tuple:
+    def y_vector(self) -> vectors.LVector:
         matrix = self._as_mmatrix()
-        return (matrix[4], matrix[5], matrix[6])
+        return vectors.LVector((matrix[4], matrix[5], matrix[6]))
 
     @y_vector.setter
     def y_vector(self, value: iter):
-        print(f"Value provided is {value}")
         matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
@@ -84,22 +84,20 @@ class LMatrix:
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
 
+        print(f"y vector applying ({value[0]}, {value[1]}, {value[2]})")
         matrix[4] = value[0]
         matrix[5] = value[2]
         matrix[6] = value[1]
 
         self.matrix = om2.MTransformationMatrix(matrix)
-        print(f"Y Vector of {self} set to {(matrix[4], matrix[5], matrix[6])}")
-
 
     @property
-    def z_vector(self) -> tuple:
+    def z_vector(self) -> vectors.LVector:
         matrix = self._as_mmatrix()
-        return (matrix[8], matrix[9], matrix[10])
+        return vectors.LVector((matrix[8], matrix[9], matrix[10]))
 
     @z_vector.setter
     def z_vector(self, value: iter):
-        print(f"Value provided is {value}")
         matrix = self._as_mmatrix()
         for val in value:
             if isinstance(val, (float, int, dc.Decimal)) == False:
@@ -107,6 +105,8 @@ class LMatrix:
 
         if len(value) != 3:
             raise ValueError(f"{value} doesn't contain exactly three values.")
+
+        print(f"z vector applying ({value[0]}, {value[1]}, {value[2]})")
 
         matrix[8] = value[0]
         matrix[9] = value[1]
@@ -116,7 +116,9 @@ class LMatrix:
 
     @property
     def trans(self):
-        dprint(f"Generating a value from a {type(self.matrix.translation(om2.MSpace.kWorld))}")
+        dprint(
+            f"Generating a value from a {type(self.matrix.translation(om2.MSpace.kWorld))}"
+        )
         return vectors.LVector((self.matrix.translation(om2.MSpace.kWorld)))
 
     @trans.setter
@@ -130,6 +132,7 @@ class LMatrix:
     def __setitem__(self, i, value):
         matrix = self._as_mmatrix
         matrix[i] = value
+        self.matrix = matrix
 
     def aim(
         self,
@@ -156,11 +159,11 @@ class LMatrix:
             ValueError: If the primary and secondary axis are the same.
         """
 
-        if(isinstance(subject, LvNode)):
+        if isinstance(subject, LvNode):
             subject = subject.name
-        if(isinstance(primary_target, LvNode)):
+        if isinstance(primary_target, LvNode):
             primary_target = primary_target.name
-        if(isinstance(secondary_target, LvNode)):
+        if isinstance(secondary_target, LvNode):
             secondary_target = secondary_target.name
 
         for node_name in [subject, primary_target, secondary_target]:
@@ -185,56 +188,66 @@ class LMatrix:
         # Calculate normalized line vector between subject and target
         pos_a = vectors.LVector(cmds.xform(subject, q=True, t=True, ws=True))
         pos_b = vectors.LVector(cmds.xform(primary_target, q=True, t=True, ws=True))
-        primary_vector = vectors.get_line(pos_a, pos_b)
+        primary_vector = vectors.get_line(pos_b, pos_a)
         primary_vector.normalize()
+        visualize.show_vector(primary_vector, n="Primary_vector")
 
         # Calculate normalized line vector between subject and secondary axis target
         pos_c = vectors.LVector(cmds.xform(secondary_target, q=True, t=True, ws=True))
         secondary_vector = vectors.get_line(pos_a, pos_c)
         secondary_vector.normalize()
+        visualize.show_vector(secondary_vector, n="unclean_seconardy_vector")
 
         # Derive tertiary axis
         tertiary_vector = primary_vector.cross_prod(secondary_vector)
         tertiary_vector.normalize()
+        visualize.show_vector(tertiary_vector, n="tertiary_vector")
 
         # 'Sanitize' secondary vector:
         secondary_vector = primary_vector.cross_prod(tertiary_vector)
         secondary_vector.normalize()
+        visualize.show_vector(secondary_vector, n="clean_seconary_vector")
 
         # Set the matrix content
         unused_axis = ["x", "y", "z"]
         # Match case not available in this Mayapy.
         # The aimed vector in the primary chosen axis:
-        print(f"Unused Axis are {unused_axis}")
-        print(f"Vectors are:\n{primary_vector}\n{secondary_vector}\n{tertiary_vector}")
         if primary_axis == "x":
+            print(f"Primary vector is X:{primary_vector}")
             self.x_vector = primary_vector
             unused_axis.remove("x")
+            print(f"X vector is now {self.x_vector}")
 
         elif primary_axis == "y":
+            print(f"Primary vector is Y:{primary_vector}")
             self.y_vector = primary_vector
+            print(f"Y vector is now {self.y_vector}")
             unused_axis.remove("y")
 
         elif primary_axis == "z":
+            print(f"Primary vector is Z:{primary_vector}")
             self.z_vector = primary_vector
             unused_axis.remove("z")
+            print(f"Z vector is now {self.z_vector}")
 
         # The 'up' vector (secondary axis) in chosen secondary axis.
-        print(f"Unused Axis are {unused_axis}")
         if secondary_axis == "x":
+            print(f"Secondary Vector is X:{secondary_vector}")
             self.x_vector = secondary_vector
             unused_axis.remove("x")
+            print(f"X vector is now {self.x_vector}")
 
         elif secondary_axis == "y":
+            print(f"Secondary Vector is Y:{secondary_vector}")
             self.y_vector = secondary_vector
             unused_axis.remove("y")
+            print(f"Y vector is now {self.y_vector}")
 
         elif secondary_axis == "z":
+            print(f"Secondary Vector is Z:{secondary_vector}")
             self.z_vector = secondary_vector
             unused_axis.remove("z")
-
-
-        print(f"Unused Axis are {unused_axis}")
+            print(f"Z vector is now {self.z_vector}")
 
         if unused_axis[0] == "x":
             self.x_vector = tertiary_vector
@@ -253,7 +266,7 @@ class LMatrix:
             NameError: If the name doesn't exist in the scene (or is not unique.)
             TypeError: If the node named isn't an appropriate transform.
         """
-        if(isinstance(node_name, LvNode)):
+        if isinstance(node_name, LvNode):
             node_name = node_name.name
         if cmds.objExists(node_name) == False:
             raise NameError(f"{node_name} not found in scene or is not unique.")
@@ -268,3 +281,12 @@ class LMatrix:
 
         transform_fn = om2.MFnTransform(dag_path)
         transform_fn.setTransformation(self.matrix)
+
+    def __str__(self):
+        mm = self._as_mmatrix()
+        string = f"\n[{mm[0]}, {mm[1]}, {mm[2]}, {mm[3]}]"
+        string += f"\n[{mm[4]}, {mm[5]}, {mm[6]}, {mm[7]}]"
+        string += f"\n[{mm[8]}, {mm[9]}, {mm[10]}, {mm[11]}]"
+        string += f"\n[{mm[12]}, {mm[13]}, {mm[14]}, {mm[15]}]"
+
+        return string

@@ -15,6 +15,7 @@ import sys
 
 import random
 import pprint as pp
+from . import visualize
 
 sys.path.append("C:/3DDev/rtech/")
 
@@ -209,19 +210,19 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     rot_matrix = matrices.LMatrix(testing_mesh)
     print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector}")
     test_suite.assert_true(
-        rot_matrix.x_vector == (1.0, 0.0, 0.0),
+        rot_matrix.x_vector == (vectors.LVector((1.0, 0.0, 0.0))),
         "Testing x_vector member of lmatrix is unchanged.",
     )
 
     print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector}")
     test_suite.assert_true(
-        rot_matrix.y_vector == (0.0, 0.0, 1.0),
+        rot_matrix.y_vector == (vectors.LVector((0.0, 0.0, 1.0))),
         "Testing y_vector member of lmatrix points scene-forward.",
     )
 
     print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector}")
     test_suite.assert_true(
-        rot_matrix.z_vector == (0.0, -1.0, 0.0),
+        rot_matrix.z_vector == (vectors.LVector((0.0, -1.0, 0.0))),
         "Testing z_vector member of lmatrix points scene-down.",
     )
 
@@ -257,6 +258,14 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     aimed_matrix.aim(test_subject, aim_target, secondary_target)
 
     aimed_matrix.apply_to_transform(test_subject)
+    print(aimed_matrix)
+
+    x_nurbs = visualize.show_vector(aimed_matrix.x_vector)
+    y_nurbs = visualize.show_vector(aimed_matrix.y_vector)
+    z_nurbs = visualize.show_vector(aimed_matrix.z_vector)
+    visualize.recolour(x_nurbs, colour=13)
+    visualize.recolour(y_nurbs, colour=14)
+    visualize.recolour(z_nurbs, colour=15)
 
     print("Remember that an unclean scene make cause failures.")
 
