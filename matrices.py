@@ -1,16 +1,15 @@
-'''
+"""
 matrices.py
 Created: Tuesday, 19th September 2023 6:29:01 pm
 Matthew Riche
 Last Modified: Thursday, 5th October 2023 3:59:14 pm
 Modified By: Matthew Riche
-'''
+"""
 
 
 import maya.cmds as cmds
 import decimal as dc
 from .console import dprint
-from typing import Union
 import math
 from enum import Enum
 
@@ -26,7 +25,7 @@ class RotOrder(Enum):
 
 
 dc.getcontext().prec = 17
-epsilon = dc.Decimal("1e-5")
+epsilon = dc.Decimal("1e-15")
 
 
 class LMatrix:
@@ -47,7 +46,6 @@ class LMatrix:
                     self.euler = cmds.xform(node, q=True, ro=True, ws=True)
                     self.translate = cmds.xform(node, q=True, t=True, ws=True)
                     self.rot_order = cmds.getAttr(f"{node}.rotateOrder")
-                    print(f"Rotate order is {self.rot_order}")
 
     def _unwrap_radians(self, rad: dc.Decimal) -> dc.Decimal:
         """Preventing radians from turning more than a full rotation.
@@ -57,7 +55,7 @@ class LMatrix:
 
         Returns:
             dc.Decimal: Radians unwrapped.
-        """        
+        """
         while rad <= -math.pi:
             rad += 2 * math.pi
 
@@ -110,14 +108,14 @@ class LMatrix:
                     )
 
         return result
-    
+
     @property
-    def x_vector_quant(self) -> tuple:    
+    def x_vector_quant(self) -> tuple:
         """Provides the x vector of the matrix in quantized floats.
 
         Returns:
             tuple: (float, float, float)
-        """           
+        """
         return (
             float(self.matrix[0][0].quantize(epsilon, rounding=dc.ROUND_DOWN)),
             float(self.matrix[0][1].quantize(epsilon, rounding=dc.ROUND_DOWN)),
@@ -130,7 +128,7 @@ class LMatrix:
 
         Returns:
             tuple: (float, float, float)
-        """           
+        """
         return (
             float(self.matrix[1][0].quantize(epsilon, rounding=dc.ROUND_DOWN)),
             float(self.matrix[1][1].quantize(epsilon, rounding=dc.ROUND_DOWN)),
@@ -143,7 +141,7 @@ class LMatrix:
 
         Returns:
             tuple: (float, float, float)
-        """           
+        """
         return (
             float(self.matrix[2][0].quantize(epsilon, rounding=dc.ROUND_DOWN)),
             float(self.matrix[2][1].quantize(epsilon, rounding=dc.ROUND_DOWN)),
@@ -156,7 +154,7 @@ class LMatrix:
 
         Returns:
             tuple: (Decimal, Decimal, Decimal)
-        """        
+        """
         return (self.matrix[0][0], self.matrix[0][1], self.matrix[0][2])
 
     @x_vector.setter
@@ -171,7 +169,7 @@ class LMatrix:
 
         Returns:
             tuple: (Decimal, Decimal, Decimal)
-        """        
+        """
         return (self.matrix[1][0], self.matrix[1][1], self.matrix[1][2])
 
     @y_vector.setter
@@ -186,7 +184,7 @@ class LMatrix:
 
         Returns:
             tuple: (Decimal, Decimal, Decimal)
-        """        
+        """
         return (self.matrix[2][0], self.matrix[2][1], self.matrix[2][2])
 
     @z_vector.setter
@@ -296,17 +294,12 @@ class LMatrix:
             [0, math.sin(roll), math.cos(roll)],
         ]
 
-        print(f"RX:{R_x}\nRY:{R_y}\nRZ:{R_z}")
-        
         # Rounding off tiny floating point below epsilon
         for i in [R_x, R_y, R_z]:
             for j in range(3):
                 for k in range(3):
-                    if(abs(i[j][k]) < epsilon):
-                        print(f"CULLING tiny value {i[j][k]}")
+                    if abs(i[j][k]) < epsilon:
                         i[j][k] = 0
-
-        print(f"RX:{R_x}\nRY:{R_y}\nRZ:{R_z}")
 
         if self.rot_order == RotOrder.XYZ:
             R_xy = self._3x3mult(R_x, R_y)

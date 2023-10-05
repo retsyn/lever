@@ -249,7 +249,7 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     decom_y_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[4:7]
     decom_z_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[8:11]
 
-    print(f"Comparing decomp node x vector {decom_x_vec} to lmatrix x vector {test_matrix2.x_vector}")
+    print(f"Comparing decomp node x vector {decom_x_vec} to lmatrix x vector {test_matrix2.x_vector_quant}")
 
 
     exit()
