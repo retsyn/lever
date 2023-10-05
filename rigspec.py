@@ -6,7 +6,7 @@ Last Modified: Thursday, 14th September 2023 10:13:29 am
 Modified By: Matthew Riche
 """
 
-# Example rigspic statement.
+# Example rigspec statement.
 # placer:(x, y, z), local, pa, sa, cl, sz, p
 from .console import dprint
 from . import placer

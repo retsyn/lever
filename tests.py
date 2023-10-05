@@ -212,31 +212,44 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     )
 
     # Rotate the testing meshes in predicted and random orientations for vector tests.
-    cmds.rotate(90, 0, 0, testing_mesh)
+    cmds.rotate(90, 90, -90, testing_mesh)
+    cmds.setAttr(f"{testing_mesh}.rotateOrder", 2)
     print("Rotated the test_mesh.")
     rot_matrix = matrices.LMatrix(testing_mesh)
     print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector_quant}")
     test_suite.assert_true(
-        rot_matrix.x_vector_quant == (vectors.LVector((1.0, 0.0, 0.0))),
-        "Testing x_vector member of lmatrix is unchanged.",
+        rot_matrix.x_vector_quant == (vectors.LVector((-1.0, 0.0, 0.0))),
+        "Testing x_vector member of lmatrix points scene-left.",
     )
 
     print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector_quant}")
     test_suite.assert_true(
-        rot_matrix.y_vector_quant == (vectors.LVector((0.0, 0.0, 1.0))),
-        "Testing y_vector member of lmatrix points scene-forward.",
+        rot_matrix.y_vector_quant == (vectors.LVector((0.0, 0.0, -1.0))),
+        "Testing y_vector member of lmatrix points scene-back",
     )
 
     print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector_quant}")
     test_suite.assert_true(
         rot_matrix.z_vector_quant == (vectors.LVector((0.0, -1.0, 0.0))),
-        "Testing z_vector member of lmatrix points scene-down.",
+        "Make sure z vector is aiming scene-down.",
     )
 
-    exit()
+
     random_rot = random_vector(rot=True)
     cmds.rotate(random_rot[0], random_rot[1], random_rot[2], testing_mesh2)
     test_matrix2 = matrices.LMatrix(testing_mesh2)
+
+    # Now we want to test if the output of a decomp matrix is identical to our matrix type.
+    decomp_node = cmds.createNode('decomposeMatrix')
+    cmds.connectAttr(f"{testing_mesh2}.worldMatrix[0]", f"{decomp_node}.inputMatrix")
+    decom_x_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[0:3]
+    decom_y_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[4:7]
+    decom_z_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[8:11]
+
+    print(f"Comparing decomp node x vector {decom_x_vec} to lmatrix x vector {test_matrix2.x_vector}")
+
+
+    exit()
 
     # Apply the matrix taken from testing_mesh2 to testing_mesh1
     test_matrix2.apply_to_transform(testing_mesh)
