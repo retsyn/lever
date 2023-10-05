@@ -217,18 +217,21 @@ def matrices_test(test_suite: munit.SuiteUnitTest()):
     print("Rotated the test_mesh.")
     rot_matrix = matrices.LMatrix(testing_mesh)
     print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector_quant}")
+    print(f"Non quantized version is {rot_matrix.x_vector}")
     test_suite.assert_true(
         rot_matrix.x_vector_quant == (vectors.LVector((-1.0, 0.0, 0.0))),
         "Testing x_vector member of lmatrix points scene-left.",
     )
 
     print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector_quant}")
+    print(f"Non quantized version is {rot_matrix.y_vector}")
     test_suite.assert_true(
         rot_matrix.y_vector_quant == (vectors.LVector((0.0, 0.0, -1.0))),
         "Testing y_vector member of lmatrix points scene-back",
     )
 
     print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector_quant}")
+    print(f"Non quantized version is {rot_matrix.z_vector}")
     test_suite.assert_true(
         rot_matrix.z_vector_quant == (vectors.LVector((0.0, -1.0, 0.0))),
         "Make sure z vector is aiming scene-down.",
