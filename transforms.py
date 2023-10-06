@@ -79,9 +79,6 @@ def aim_at(
                 f"{node}{channel} is locked or connected, can't orient it."
             )
 
-    aim_vec = None
-    up_vec = None
-
     def _letter_to_vec(letter):
         if letter == "x":
             return [1.0, 0.0, 0.0]

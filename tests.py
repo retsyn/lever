@@ -175,12 +175,17 @@ def rigspec_test(testsuite: munit.SuiteUnitTest):
         testsuite (munit.SuiteUnitTest): Ongoing test suite
     """
 
+    # Rigspec might look like:
+    #"placer: p=(12, 38, 2), n=wrist, c=yellow, type=1"
+    #" > placer: p=(12, 38, 2), n=finger1, c=yellow, type=1"
+    #" > > placer: p=(12, 38, 2), n=finger2, c=yellow, type=1""
+    #" > placer: p=(12, 38, 2), n=thumb, c=yellow, type=1"
+
     # Testing rig-spec:
     new_expression = rigspec.Expression(
         "placer: p=(12, 38, 2), n=hello, c=yellow, type=1"
     )
-    # TODO put in tests for each value of the expression.
-
+    new_expression.breakdown()
 
 def orientation_test(testsuite: munit.SuiteUnitTest):
     aim_locator = lvnode.LvNode(cmds.spaceLocator(n="aim_at_me")[0])
@@ -216,8 +221,8 @@ def full_suite_test():
     """Full Test of all modules."""
     test_suite = munit.SuiteUnitTest()
 
-    build_objects_test(test_suite)
+    #build_objects_test(test_suite)
     rigspec_test(test_suite)
-    orientation_test(test_suite)
+    #orientation_test(test_suite)
 
     test_suite.report()

@@ -19,6 +19,12 @@ class Placer(build.PlanObject):
         self._size = size
         self.type = "Placer"
         super().__init__(position, name)
+
+        self.aim_target = None
+        self.up_target = None
+        self.aim_axis = 'y'
+        self.up_axis = 'x'
+        self.parent = None
         
     def build(self):
         """Create a nurbs sphere with no shader.

@@ -10,12 +10,26 @@ Modified By: Matthew Riche
 # placer:(x, y, z), local, pa, sa, cl, sz, p
 from .console import dprint
 from . import placer
+from collections import deque
+
+
+class Stack:
+    def __init__(self):
+        self.expressions_stack = deque()
+        self.parent_stack = deque()
+
+    def push_parent_node(self, node: str):
+        self.parent_stack.append(node)
+
+    def pop_parent_node(self) -> str:
+        pop_value = self.parent_stack.pop()
+        return pop_value
 
 
 class Expression:
     valid_commands = ["placer"]
 
-    def __init__(self, expression: str):
+    def __init__(self, expression: str, last_parsed=None):
         """Takes a string of rigspec code and parses it.
 
         Args:
@@ -24,12 +38,32 @@ class Expression:
         self.unparsed_expression = expression
         self.command_type = None
         self.args = None
+        self.parent = None
 
+        self.parse_childhood(last_parsed)
         self.parse_command()
         self.parse_arguments()
         self.cast_arguments()
-        dprint(f"Expression Argument Data is:\n\t{self.args}")
-            
+
+    def breakdown(self):
+        """Debug feature to break apart contents to make sure parsing worked."""
+        print(f"Unparsed expression: {self.unparsed_expression}")
+        print(f"Command type: {self.command_type}")
+        print(f"Arg data:\n{self.args}")
+
+    def parse_childhood(self) -> int:
+        """Found out how deeply nested this call is by counting '>' chars.
+
+        Returns:
+            int: How many '>' are in the expression
+        """        
+        if ">" not in self.unparsed_expression:
+            self.parent = None
+            return 0
+        else:
+            to_parse = self.unparsed_expression.replace(" ", "").replace("\t", "")
+            child_count = count_chars(to_parse, ">")
+            return child_count
 
     def parse_command(self):
         """Determines what command is called.
@@ -117,7 +151,6 @@ class Expression:
                     self.args[i] = arg
 
 
-
 def run_parsed_expression(expression: Expression):
     if isinstance(expression, Expression) == False:
         raise TypeError(f"Parameter {expression} is not a rigspec.Expression.")
@@ -127,3 +160,21 @@ def run_parsed_expression(expression: Expression):
 
     if expression.command_type == "placer":
         new_placer = placer.Placer()
+
+
+def count_chars(input_string: str, target_str: str) -> int:
+    """Count how many instances of a certain character are found in string.
+
+    Args:
+        input_string (str): Expression string containing countable characters.
+        target_char (str): character to count.
+
+    Returns:
+        int: Number of times target_char appears in input_string
+    """
+
+    count = 0
+    for char in input_string:
+        if char == target_str:
+            count += 1
+    return count

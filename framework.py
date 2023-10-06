@@ -22,6 +22,9 @@ class RigFrame:
         self.built_placers = []
         self.side = Side.CENTRE
 
+        self.build_commands = None
+        self.post_build_commands = None
+
     def build_frame(self):
         pass
     
