@@ -10,7 +10,6 @@ Things like 'placers' are found in other modules, that inherit some of these cla
 some of these defs.
 """
 
-from . import vectors
 from maya.api.OpenMaya import MVector
 from .console import dprint
 

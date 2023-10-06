@@ -15,7 +15,6 @@ import sys
 
 import random
 import pprint as pp
-from . import visualize
 
 sys.path.append("C:/3DDev/rtech/")
 
@@ -49,14 +48,9 @@ except:
     raise ImportError("Couldn't parse rigspec module.")
 
 try:
-    from . import matrices
+    from . import transforms
 except:
-    raise ImportError("Couldn't parse matrices module.")
-
-try:
-    from . import vectors
-except:
-    raise ImportError("Couldn't parse Vectors module.")
+    raise ImportError("Couldn't pare transforms module.")
 
 
 def random_vector(rot=False):
@@ -183,166 +177,47 @@ def rigspec_test(testsuite: munit.SuiteUnitTest):
 
     # Testing rig-spec:
     new_expression = rigspec.Expression(
-        "placer: p=(12, 38, 2), n=hellow, c=yellow, type=1"
+        "placer: p=(12, 38, 2), n=hello, c=yellow, type=1"
     )
     # TODO put in tests for each value of the expression.
 
 
-def matrices_test(test_suite: munit.SuiteUnitTest()):
-    """Testing LMatrix class
+def orientation_test(testsuite: munit.SuiteUnitTest):
+    aim_locator = lvnode.LvNode(cmds.spaceLocator(n="aim_at_me")[0])
+    up_locator = lvnode.LvNode(cmds.spaceLocator(n="im_up")[0])
+    subject_locator = lvnode.LvNode(cmds.spaceLocator(n="im_aiming")[0])
 
-    Args:
-        test_suite (munit.SuiteUnitTest): _description_
-    """
+    cmds.xform(aim_locator.name, t=(10, 10, 0), ws=True)
+    cmds.xform(up_locator.name, t=(0, 0, 10), ws=True)
 
-    testing_mesh = cmds.polyCube(n="test_mesh_a")[0]
-    testing_mesh2 = cmds.polyCube(n="test_mesh_b")[0]
-    test_spot = random_vector()
-    # Testing class
-    cmds.xform(testing_mesh, t=test_spot, ws=True)
-    test_matrix = matrices.LMatrix(testing_mesh)
-    print(
-        f"Matrix.trans of {testing_mesh} after random movement:\n{str(test_matrix.translate)}"
-    )
-    test_suite.assert_near(
-        test_matrix.translate,
-        cmds.xform(testing_mesh, q=True, t=True, ws=True),
-        0.1,
-        "Testing if matrix trans property matches actual transform.",
-    )
-
-    # Rotate the testing meshes in predicted and random orientations for vector tests.
-    cmds.rotate(90, 90, -90, testing_mesh)
-    cmds.setAttr(f"{testing_mesh}.rotateOrder", 2)
-    print("Rotated the test_mesh.")
-    rot_matrix = matrices.LMatrix(testing_mesh)
-    print(f"Reading x_vector of {testing_mesh} as {rot_matrix.x_vector_quant}")
-    print(f"Non quantized version is {rot_matrix.x_vector}")
-    test_suite.assert_true(
-        rot_matrix.x_vector_quant == (vectors.LVector((-1.0, 0.0, 0.0))),
-        "Testing x_vector member of lmatrix points scene-left.",
-    )
-
-    print(f"Reading y_vector of {testing_mesh} as {rot_matrix.y_vector_quant}")
-    print(f"Non quantized version is {rot_matrix.y_vector}")
-    test_suite.assert_true(
-        rot_matrix.y_vector_quant == (vectors.LVector((0.0, 0.0, -1.0))),
-        "Testing y_vector member of lmatrix points scene-back",
-    )
-
-    print(f"Reading z_vector of {testing_mesh} as {rot_matrix.z_vector_quant}")
-    print(f"Non quantized version is {rot_matrix.z_vector}")
-    test_suite.assert_true(
-        rot_matrix.z_vector_quant == (vectors.LVector((0.0, -1.0, 0.0))),
-        "Make sure z vector is aiming scene-down.",
-    )
-
-
-    random_rot = random_vector(rot=True)
-    cmds.rotate(random_rot[0], random_rot[1], random_rot[2], testing_mesh2)
-    test_matrix2 = matrices.LMatrix(testing_mesh2)
-
-    # Now we want to test if the output of a decomp matrix is identical to our matrix type.
-    decomp_node = cmds.createNode('decomposeMatrix')
-    cmds.connectAttr(f"{testing_mesh2}.worldMatrix[0]", f"{decomp_node}.inputMatrix")
-    decom_x_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[0:3]
-    decom_y_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[4:7]
-    decom_z_vec = cmds.getAttr(f"{decomp_node}.inputMatrix")[8:11]
-
-    print(f"Comparing decomp node x vector {decom_x_vec} to lmatrix x vector {test_matrix2.x_vector_quant}")
-
-
-    exit()
-
-    # Apply the matrix taken from testing_mesh2 to testing_mesh1
-    test_matrix2.apply_to_transform(testing_mesh)
-
-    test_suite.assert_near(
-        cmds.xform(testing_mesh, q=True, t=True, ws=True),
-        cmds.xform(testing_mesh2, q=True, t=True, ws=True),
+    transforms.aim_at(subject_locator, aim_locator, up_locator)
+    testsuite.assert_near(
+        subject_locator.rotate,
+        (-45.0, -90.0, 0.0),
         0.0001,
-        "Testing if the application of the same matrix has placed it in an identical translation.",
+        "Did temp aim constraint orient as expected with default yxz order.",
     )
-
-    test_suite.assert_near(
-        cmds.xform(testing_mesh, q=True, ro=True, ws=True),
-        cmds.xform(testing_mesh2, q=True, ro=True, ws=True),
+    transforms.aim_at(subject_locator, aim_locator, up_locator, primary_axis='z', secondary_axis='y')
+    testsuite.assert_near(
+        subject_locator.rotate,
+        (90.0, 0.0, 135.0),
         0.0001,
-        "Testing if the application of the same matrix has placed it in an identical orientation.",
+        "Did temp aim constraint orient as expected with zyx order..",
     )
-
-    # Test for aim-at.
-    test_subject = lvnode.LvNode(cmds.spaceLocator(n="test_subject")[0])
-    aim_target = lvnode.LvNode(cmds.spaceLocator(n="aim_at_me")[0])
-    secondary_target = lvnode.LvNode(cmds.spaceLocator(n="seconary_aim")[0])
-    aim_target.translate = (10, 10, 0)
-    secondary_target.translate = (0, 0, -10)
-
-    aimed_matrix = matrices.LMatrix(test_subject)
-    print(f"{aimed_matrix.x_vector}\n{aimed_matrix.y_vector}\n{aimed_matrix.z_vector}")
-    aimed_matrix.aim(test_subject, aim_target, secondary_target)
-
-    aimed_matrix.apply_to_transform(test_subject)
-    print(aimed_matrix)
-
-    x_nurbs = visualize.show_vector(aimed_matrix.x_vector)
-    y_nurbs = visualize.show_vector(aimed_matrix.y_vector)
-    z_nurbs = visualize.show_vector(aimed_matrix.z_vector)
-    visualize.recolour(x_nurbs, colour=13)
-    visualize.recolour(y_nurbs, colour=14)
-    visualize.recolour(z_nurbs, colour=15)
-
-    print("Remember that an unclean scene make cause failures.")
-
-
-def vectors_test(test_suite: munit.SuiteUnitTest):
-    x_rand = random.uniform(-1000, 1000)
-    y_rand = random.uniform(-1000, 1000)
-    z_rand = random.uniform(-1000, 1000)
-
-    print(f"Testing with values x:{x_rand}, y:{y_rand}, z:{z_rand}")
-    new_vec = vectors.LVector((x_rand, y_rand, z_rand))
-    print(f"x:{new_vec.x}, y:{new_vec.y}, z:{new_vec.z}")
-    test_suite.assert_equal(
-        x_rand, new_vec.x, f"Does attribute value of {new_vec.x} match {x_rand}"
+    transforms.aim_at(subject_locator, aim_locator, up_locator, primary_axis='x', secondary_axis='z')
+    testsuite.assert_near(
+        subject_locator.rotate,
+        (0.0, 0.0, 45.0),
+        0.0001,
+        "Did temp aim constraint orient as expected with xzy order.",
     )
-
-    x_b = random.uniform(-1000, 1000)
-    y_b = random.uniform(-1000, 1000)
-    z_b = random.uniform(-1000, 1000)
-
-    print(f"Testing athrithmetic with values x:{x_b}, y:{y_b}, z:{z_b}")
-    b_vec = vectors.LVector((x_b, y_b, z_b))
-    neg_vec = new_vec - b_vec
-
-    test_suite.assert_equal(
-        neg_vec.x,
-        (new_vec.x - b_vec.x),
-        f"x attribute correctly resolving to {neg_vec.x}",
-    )
-
-    test_suite.assert_equal(
-        neg_vec.y,
-        (new_vec.y - b_vec.y),
-        f"y attribute correctly resolving to {neg_vec.y}",
-    )
-
-    test_suite.assert_equal(
-        neg_vec.z,
-        (new_vec.z - b_vec.z),
-        f"z attribute correctly resolving to {neg_vec.z}",
-    )
-
-    # Get Line test.
-
 
 def full_suite_test():
     """Full Test of all modules."""
     test_suite = munit.SuiteUnitTest()
 
-    # build_objects_test(test_suite)
-    # rigspec_test(test_suite)
-    # vectors_test(test_suite)
-    matrices_test(test_suite)
+    build_objects_test(test_suite)
+    rigspec_test(test_suite)
+    orientation_test(test_suite)
 
     test_suite.report()

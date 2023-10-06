@@ -8,11 +8,10 @@ Modified By: Matthew Riche
 
 import maya.cmds as cmds
 import maya.api.OpenMaya as om2
-import math
 import decimal as dc
-from . import vectors
 
-dc.getcontext().prec = 32
+
+dc.getcontext().prec = 16
 
 
 class LvNode:
@@ -93,6 +92,6 @@ class LvNode:
         cmds.xform(self.long_name, q=False, ro=value, ws=True, a=True)
 
     def __str__(self):
-        return f"<LvNode>'{self.name}'"
+        return f"{self.name}'"
 
 
