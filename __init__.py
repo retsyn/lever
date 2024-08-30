@@ -1,2 +1,2 @@
 print("Lever imported!")
-print("Potentia Auxilii Ante Fidem!")
+print("Necessitate ante fidem!")

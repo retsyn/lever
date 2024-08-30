@@ -64,7 +64,9 @@ class PlanObject:
         self.shape = "UNSET"
         self.type = "UNKNOWN"
         self.position = position
-        self.name = name
+        self.name = name  # Possible not needed because of UUIDs?
+        self.uuid = ""
+        
 
         self.build()
 
@@ -78,6 +80,7 @@ class PlanObject:
             "A PlanObject with no subclass got built.  Making a dud Octahedron"
         )
         self.trans = make_dud(position=self.position)
+        self.name = self.trans
         self.shape = cmds.listRelatives(self.trans, s=True)[0]
 
     def place(self):
@@ -91,6 +94,10 @@ class PlanObject:
 
         cmds.addAttr(self.trans, longName="leverBuildObject", dt="string")
         # TODO Add this object to a "build_objects" layer.
+
+    @property
+    def name(self):
+        return cmds.ls(self.uuid, uuid=True, long=False)[0]
 
     @property
     def translation(self):

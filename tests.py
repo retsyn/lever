@@ -57,7 +57,7 @@ except:
 class build_objects_suite(munit.SuiteUnitTest):
 
     def test_lvnode_translate(self):
-        #  Testing lvNode translate properties.
+        # Testing lvNode translate properties.
         testing_mesh = cmds.polyCube()[0]
         lv_test_node = lvnode.LvNode(testing_mesh)
         test_position = random_vector()
@@ -85,14 +85,18 @@ class build_objects_suite(munit.SuiteUnitTest):
     def test_dud_build(self):
         test_position = random_vector()
         gen_build_object = build.PlanObject(test_position)
-        self.assert_node_exists("Dud")
+        self.assert_node_exists(gen_build_object.name)
+
+    def test_build_create(self):
+        # Test build object, creation and properties.
+        test_position = random_vector()
+        gen_build_object = build.PlanObject(test_position)
+        self.assert_node_exists(gen_build_object.name)
         
-
-    
-
-    
-
-
+        test_suite.assert_node_type(
+            gen_build_object.shape, "mesh", "Testing that Dud is the correct node type."
+        )
+        
 def random_vector(rot=False):
     """Generate randomized coordinates in space for robust testing.
 
@@ -112,6 +116,11 @@ def random_vector(rot=False):
     z = random.uniform(lower_bound, upper_bound)
 
     return (x, y, z)
+
+
+class build_objects_suite(munit.SuiteUnitTest):
+
+  
 
 
 def build_objects_test():
