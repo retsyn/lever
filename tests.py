@@ -16,6 +16,7 @@ import sys
 import random
 import pprint as pp
 
+
 sys.path.append("C:/3DDev/rtech/")
 
 try:
@@ -50,7 +51,46 @@ except:
 try:
     from . import transforms
 except:
-    raise ImportError("Couldn't pare transforms module.")
+    raise ImportError("Couldn't parse transforms module.")
+
+
+class build_objects_suite(munit.SuiteUnitTest):
+
+    def test_lvnode_translate(self):
+        #  Testing lvNode translate properties.
+        testing_mesh = cmds.polyCube()[0]
+        lv_test_node = lvnode.LvNode(testing_mesh)
+        test_position = random_vector()
+        lv_test_node.translate = test_position
+        self.assert_near(lv_test_node.translate, test_position, 0.00001)
+        lv_test_node.delete_node()
+
+    def test_lvnode_delete(self):
+        #  Testing lvNode deletion
+        testing_mesh = cmds.polyCube()[0]
+        lv_deletion_test = lvnode.LvNode(testing_mesh)
+        name_str = lv_deletion_test.name
+        lv_deletion_test.delete_node()
+        self.assert_node_not_exists(name_str)
+
+    def test_generic_build_object_str(self):
+        # Testing generic build object str method
+        test_position = random_vector()
+        gen_build_object = build.PlanObject(test_position)
+        self.assertEqual(
+            str(gen_build_object),
+            "Lever Build object called Generic Build Object.  Type: UNKNOWN."
+        )
+
+    def test_dud_build(self):
+        test_position = random_vector()
+        gen_build_object = build.PlanObject(test_position)
+        self.assert_node_exists("Dud")
+        
+
+    
+
+    
 
 
 def random_vector(rot=False):
@@ -74,33 +114,17 @@ def random_vector(rot=False):
     return (x, y, z)
 
 
-def build_objects_test(test_suite):
+def build_objects_test():
     """Tests of LvNode, Generic Build Objects, and Placer system.
 
     Args:
         test_suite (_type_): _description_
     """
 
-    #  Testing lvNode, translate properties.
-    testing_mesh = cmds.polyCube()[0]
-    lv_test_node = lvnode.LvNode(testing_mesh)
-    test_position = random_vector()
-    lv_test_node.translate = test_position
-    test_suite.assert_near(
-        lv_test_node.translate,
-        test_position,
-        0.00001,
-        f"Testing lvnode translate property is readable and settable.",
-    )
 
     # Test build object, creation and properties.
     test_position = random_vector()
     gen_build_object = build.PlanObject(test_position)
-    test_suite.assert_equal(
-        str(gen_build_object),
-        "Lever Build object called Generic Build Object.  Type: UNKNOWN.",
-        "Testing output string.",
-    )
     test_suite.assert_node_exists("Dud", "Testing that a Dud was created...")
     test_suite.assert_node_type(
         gen_build_object.shape, "mesh", "Testing that Dud is the correct node type."
@@ -219,10 +243,13 @@ def orientation_test(testsuite: munit.SuiteUnitTest):
 
 def full_suite_test():
     """Full Test of all modules."""
-    test_suite = munit.SuiteUnitTest()
+    
+    # Create a test suite that automatically discovers all test cases
+    #suite = munit.unittest.defaultTestLoader.loadTestsFromModule(__name__)
+    suite = munit.unittest.defaultTestLoader.loadTestsFromTestCase(build_objects_suite)
 
-    #build_objects_test(test_suite)
-    rigspec_test(test_suite)
-    #orientation_test(test_suite)
+    # Create a test runner
+    runner = munit.unittest.TextTestRunner()
 
-    test_suite.report()
+    # Run the test suite
+    runner.run(suite)

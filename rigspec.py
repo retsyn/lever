@@ -40,7 +40,7 @@ class Expression:
         self.args = None
         self.parent = None
 
-        self.parse_childhood(last_parsed)
+        self.parse_childhood()
         self.parse_command()
         self.parse_arguments()
         self.cast_arguments()
