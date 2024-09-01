@@ -1,5 +1,5 @@
 '''
-globals.py
+settings.py
 Created: Wednesday, 6th September 2023 11:31:19 am
 Matthew Riche
 Last Modified: Wednesday, 6th September 2023 11:31:24 am

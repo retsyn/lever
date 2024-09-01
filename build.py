@@ -64,14 +64,9 @@ class PlanObject:
         self.shape = "UNSET"
         self.type = "UNKNOWN"
         self.position = position
-        self.name = name  # Possible not needed because of UUIDs?
-        self.uuid = ""
         
-
         self.build()
-
         self.place()
-
         self.brand()
 
     def build(self):
@@ -80,7 +75,7 @@ class PlanObject:
             "A PlanObject with no subclass got built.  Making a dud Octahedron"
         )
         self.trans = make_dud(position=self.position)
-        self.name = self.trans
+        ##self.uuid = cmds.ls(self.trans, uid=True)[0]
         self.shape = cmds.listRelatives(self.trans, s=True)[0]
 
     def place(self):
@@ -96,10 +91,6 @@ class PlanObject:
         # TODO Add this object to a "build_objects" layer.
 
     @property
-    def name(self):
-        return cmds.ls(self.uuid, uuid=True, long=False)[0]
-
-    @property
     def translation(self):
         """Uses the current worldspace position of the trans node as a property.
 
@@ -107,6 +98,15 @@ class PlanObject:
             list: Direct output of cmds.xform, in the form of [x, y, z]
         """
         return cmds.xform(self.trans, q=True, t=True, ws=True, a=True)
+    
+    @property
+    def uuid(self):
+        return (cmds.ls(self.trans, uid=True))[0]
+    
+    @property
+    def name(self):
+        return (cmds.ls(self.uuid)[0])
+    
 
     @translation.setter
     def translation(self, value: iter):
@@ -159,7 +159,8 @@ class PlanObject:
         cmds.delete(to_delete)
 
     def __str__(self):
-        return f"Lever Build object called {self.name}.  Type: {self.type}."
+        transname = cmds.ls(self.uuid)[0]
+        return f"Lever Build object called {transname}.  Type: {self.type}."
 
 
 class RigStructure:
